@@ -12,26 +12,16 @@ assets/fonts/          font files
 assets/js/             three.js, GSAP + ScrollTrigger, Lenis
 img/                   (create it) club photos, mission covers and screenshots
 vercel.json            caching + security headers
-deploy.bat             Windows: double-click to publish
-deploy.command         Mac: double-click to publish
-.vercelignore          keeps the helper files off the live site
+.vercelignore          keeps repo-only files off the live site
 ```
 
-## Publishing from your computer
+## Publishing
 
-One-time setup:
-```
-npm i -g vercel
-vercel login
-cd path\to\andromeda-web
-vercel link      # pick your existing Vercel project so the URL stays the same
-```
+This repo is connected to Vercel: **every commit to `main` goes live automatically** in about 30 seconds. No computer setup needed.
 
-Every update after that: save your changes, then double-click `deploy.bat` (Windows) / `deploy.command` (Mac), or run `vercel --prod` in this folder.
-
-Want to preview first without touching the live site? Run `vercel` (no `--prod`) — you get a private test URL.
-
-Note: if the Vercel project is also connected to a GitHub repo, a later push to that repo will redeploy whatever is on GitHub. Either disconnect Git in Vercel (Settings → Git) or keep GitHub up to date too.
+- **Edit from anywhere:** open a file on github.com, click the pencil, change it, and click **Commit changes**.
+- **Add photos:** go into the `img/` folder (create it the first time via *Add file → Upload files*, typing `img/` before the name) and upload.
+- **Undo a bad change:** Vercel → Deployments → pick an older one → **Promote to Production** (instant), or revert the commit on GitHub.
 
 ## Link previews
 

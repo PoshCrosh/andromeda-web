@@ -1,6 +1,4 @@
-deploy.bat
-deploy.command
-README.md
 .git
-.env*
+README.md
 .gitignore
+.env*
