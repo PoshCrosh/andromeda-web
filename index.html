@@ -23,7 +23,7 @@ html.loading, html.loading body{overflow:hidden}
 #loader.done{opacity:0; visibility:hidden}
 #loader .ld{display:flex; flex-direction:column; align-items:center; gap:20px; width:min(300px, 72vw)}
 #loader .ld-mark{position:relative; width:92px; height:92px; display:grid; place-items:center}
-#loader .ld-mark svg{width:46px; height:46px}
+#loader .ld-mark img{width:64px; height:64px; display:block}
 #loader .ld-orbit{position:absolute; inset:0; border:1px solid rgba(236,232,223,.13); border-radius:50%; transform:rotateX(64deg)}
 #loader .ld-orbit i{position:absolute; left:50%; top:-3px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:#8E7CF8; box-shadow:0 0 12px 2px rgba(142,124,248,.7)}
 #loader .ld-orbit{animation:ldorbit 2.4s linear infinite}
@@ -34,10 +34,11 @@ html.loading, html.loading body{overflow:hidden}
 #loader .ld-row{width:100%; display:flex; justify-content:space-between; gap:12px; font:400 10.5px/1.4 "IBM Plex Mono", ui-monospace, monospace; letter-spacing:.14em; text-transform:uppercase; color:#6E7286; font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion: reduce){ #loader .ld-orbit{animation:none} }
 </style>
+<link rel="preload" href="/img/logo.webp" as="image" type="image/webp">
 <link rel="preload" href="/assets/fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/instrument-serif-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/fonts.css">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
 /* Layout: editorial 12-col grid, mono "margin notes" + wide content; hairlines and coordinate ticks as texture.
@@ -676,7 +677,7 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
   <div class="ld">
     <div class="ld-mark" aria-hidden="true">
       <span class="ld-orbit"><i></i></span>
-      <svg viewBox="0 0 32 32"><g fill="none" stroke="#ECE8DF" stroke-width="2.6" stroke-linecap="round"><path d="M5 27C8 18 11.5 10 16 5"/><path d="M16 5c3.6 4.6 6 9.6 7.4 15"/></g><path d="M7.2 21.6c3.2 1.5 10.8.2 15.4-3.4" fill="none" stroke="#8E7CF8" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="17.6" r="2.2" fill="#ECE8DF"/><rect x="22.2" y="23.2" width="4" height="4" fill="#66D6E6"/></svg>
+      <img src="/img/logo.webp" alt="" width="64" height="64">
     </div>
     <div class="ld-name">ANDROMEDA</div>
     <div class="ld-bar"><i></i></div>
@@ -714,15 +715,7 @@ window.__LD = (function(){
 
 <!-- Logo symbol: two spiral arms rising into an "A", a tilted disk as the crossbar, a bright core, one arm ending in a pixel. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="logo" viewBox="0 0 32 32">
-    <g fill="none" stroke="#ECE8DF" stroke-width="2.6" stroke-linecap="round">
-      <path d="M5 27C8 18 11.5 10 16 5"/>
-      <path d="M16 5c3.6 4.6 6 9.6 7.4 15"/>
-    </g>
-    <path d="M7.2 21.6c3.2 1.5 10.8.2 15.4-3.4" fill="none" stroke="#8E7CF8" stroke-width="1.8" stroke-linecap="round"/>
-    <circle cx="16" cy="17.6" r="2.2" fill="#ECE8DF"/>
-    <rect x="22.2" y="23.2" width="4" height="4" fill="#66D6E6"/>
-  </symbol>
+  <symbol id="logo" viewBox="0 0 32 32"><image href="/img/logo.webp" width="32" height="32"/></symbol>
 </svg>
 
 <canvas id="stars" aria-hidden="true"></canvas>
@@ -1189,7 +1182,7 @@ const CONFIG = {
     { role: "Vicepresidente",         name: "Martin Alejandro Mosquera Montúfar", short: "Martin Mosquera", duty: "Coordina misiones y tripulaciones, y suple a la presidencia.",      photo: "" },
     { role: "Proyectos",              name: "Arturo Del Callejo Salgado", short: "Arturo Del Callejo",       duty: "Elige, organiza y acompaña cada misión hasta su lanzamiento.",       photo: "" },
     { role: "Finanzas",               name: "Cristian Zavala Velasco", short: "Cristian Zavala",          duty: "Presupuesto, patrocinios y cuentas claras.",                         photo: "" },
-    { role: "Comunicación",           name: "Violeta Serrano Armenta", short: "Violeta Serrano",          duty: "Redes, contenido y lo que se cuenta afuera.",                        photo: "" },
+    { role: "Comunicación",           name: "Violeta Serrano Armenta", short: "Violeta Serrano",          duty: "Redes, contenido y lo que se cuenta afuera.",                        photo: "img/violeta.jpg" },
     { role: "Responsabilidad Social", name: "Leonardo Ramses Sanchez Barbosa", short: "Leonardo Sanchez",  duty: "Conecta al club con la comunidad y con proyectos de impacto social.", photo: "img/leonardo.jpg" }
   ],
 
@@ -1508,31 +1501,27 @@ if (FINE && !RM){
   document.addEventListener("pointerleave", () => c.classList.remove("on"));
 }
 
-/* ---------- particle logo: the spiral "A" reassembles on hover ---------- */
-const LOGO = [
-  ["M5 27C8 18 11.5 10 16 5", "#ECE8DF", 22, 1.3],
-  ["M16 5c3.6 4.6 6 9.6 7.4 15", "#ECE8DF", 17, 1.3],
-  ["M7.2 21.6c3.2 1.5 10.8.2 15.4-3.4", "#8E7CF8", 15, .95]
-];
-const logoPts = (() => {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.style.cssText = "position:absolute;width:0;height:0"; document.body.appendChild(svg);
-  const pts = [];
-  for (const [d, c, n, r] of LOGO){
-    const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", d); svg.appendChild(p);
-    const L = p.getTotalLength();
-    for (let i = 0; i < n; i++){ const q = p.getPointAtLength(L * i / (n - 1)); pts.push({ x: q.x, y: q.y, c, r }); }
-  }
-  svg.remove();
-  const rr = rng(5);
-  for (let i = 0; i < 9; i++){ const a = rr() * 6.28, d = Math.sqrt(rr()) * 1.6; pts.push({ x: 16 + Math.cos(a) * d, y: 17.6 + Math.sin(a) * d, c: "#ECE8DF", r: 1 }); }
-  for (const [x, y] of [[23.2, 24.2], [25.2, 24.2], [23.2, 26.2], [25.2, 26.2]]) pts.push({ x, y, c: "#66D6E6", r: 1.05, sq: true });
-  return pts;
-})();
+/* ---------- particle logo: the Andromeda spiral, rebuilt from its own pixels, reassembles on hover ---------- */
+const logoPts = new Promise(res => {
+  const im = new Image(); im.decoding = "async";
+  im.onload = () => {
+    const N = 64, c = document.createElement("canvas"); c.width = c.height = N; const g = c.getContext("2d");
+    g.drawImage(im, 0, 0, N, N); const d = g.getImageData(0, 0, N, N).data, pts = [];
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+      const i = (y * N + x) * 4, a = d[i + 3] / 255; if (a < .2) continue;
+      pts.push({ x: (x + .5) * 32 / N, y: (y + .5) * 32 / N, c: `rgba(${d[i]},${d[i + 1]},${d[i + 2]},${Math.min(1, a * 1.15).toFixed(2)})`, r: .33 });
+    }
+    res(pts);
+  };
+  im.onerror = () => res([]);
+  im.src = "/img/logo.webp";
+});
 function particleLogo(host, trigger){
-  const cv = document.createElement("canvas"); host.appendChild(cv); host.classList.add("particles");
+  const cv = document.createElement("canvas"); host.appendChild(cv);
   const ctx = cv.getContext("2d"), r = rng(host.offsetTop + 3);
   let size = 0, k = 0, t0 = 0, dur = 1300, anim = false;
-  const pts = logoPts.map(p => ({ ...p, ox: 0, oy: 0 }));
+  let pts = [];
+  logoPts.then(list => { if (!list.length){ cv.remove(); return; } pts = list.map(p => ({ ...p, ox: 0, oy: 0 })); host.classList.add("particles"); fit(); });
   const fit = () => { size = host.clientWidth; const dpr = Math.min(2, devicePixelRatio || 1) * 1.5; cv.width = cv.height = Math.round(size * dpr); ctx.setTransform(cv.width / 32, 0, 0, cv.height / 32, 0, 0); draw(); };
   const draw = () => {
     ctx.clearRect(0, 0, 32, 32);
@@ -3025,6 +3014,7 @@ function initUniverse(){
     ring.appendChild(b); return b;
   });
   const ell = $(".orbit-ellipse", stage), core = $(".orbit-core", stage);
+  $(".mono", core).textContent = "Núcleo · " + String(n).padStart(2, "0") + (n === 1 ? " misión" : " misiones");
   ring.appendChild(ell); ring.appendChild(core);
   ell.style.cssText = "left:0;top:0"; core.style.cssText = "left:0;top:0";
   const TILT = 14;

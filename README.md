@@ -4,7 +4,7 @@ Static site for the Andromeda student club (Tec de Monterrey, Guadalajara). No b
 
 ```
 index.html             the whole site (HTML + CSS + JS)
-favicon.svg            browser tab icon
+favicon.png            browser tab icon
 apple-touch-icon.png   iPhone home-screen icon
 og.jpg                 preview image when the link is shared (WhatsApp, Discord, Instagram…)
 assets/fonts.css       self-hosted fonts (Archivo, Instrument Sans/Serif, IBM Plex Mono)
