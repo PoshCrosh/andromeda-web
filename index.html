@@ -348,6 +348,7 @@ section{position:relative}
 .dot{width:7px; height:7px; border-radius:50%; display:inline-block; flex:none}
 .dot.live{background:var(--cyan); box-shadow:0 0 0 3px rgba(102,214,230,.14)}
 .dot.wip{background:transparent; border:1.5px solid var(--violet)}
+.othumb img + span{display:none}
 .dot.beta{background:var(--violet); box-shadow:0 0 0 3px rgba(142,124,248,.16)}
 .dot.todo{background:transparent; border:1.5px dashed var(--ink-3)}
 .view-toggle{display:none; border:1px solid var(--rule-strong); border-radius:2px; margin-bottom:var(--s3); width:max-content; max-width:100%}
@@ -1207,9 +1208,9 @@ const CONFIG = {
      image: portada de la tarjeta · gallery: capturas de la ficha (lista de imágenes)                                */
   missions: [
     { num: "001", title: "Constela", type: "Red social", status: "curso", team: ["PRG", "ART", "COM"],
-      desc: "Una red social que conecta a estudiantes del Tec de todos los campus de México. En diseño.", link: "", image: "", gallery: [] },
+      desc: "Una red social que conecta a estudiantes del Tec de todos los campus de México. En diseño.", link: "", image: "img/constela-cover.jpg", gallery: [] },
     { num: "002", title: "Icebreakers", type: "App", status: "beta", team: ["PRG", "ART", "NAR"],
-      desc: "Cartas digitales para romper el hielo en la mesa: preguntas por categoría y seguimientos que cambian si deslizas sí o no.", link: "", image: "", gallery: [] }
+      desc: "Cartas digitales para romper el hielo en la mesa: preguntas por categoría y seguimientos que cambian si deslizas sí o no.", link: "", image: "img/icebreakers-cover.jpg", gallery: [] }
   ],
 
   /* — Colaboración: fichas de cada planeta.
