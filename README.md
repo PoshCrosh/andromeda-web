@@ -41,9 +41,9 @@ Everything the club fills in over time lives in one place: the `CONFIG` object a
 | `contactEmail` | Footer email + copy button |
 | `sessions` | Schedule, place, first session date |
 | `advisor` | Faculty advisor name, department, photo (top corner of the heptagon) |
-| `council` | Board roles — add, remove or reorder; the heptagon redraws itself with that many corners |
+| `council` | Board roles — add, remove or reorder; the heptagon redraws itself with that many corners. `short` = the name shown on phones (full name appears when tapped) |
 | `gallery` | "Bitácora visual" photo strip: `{ image: "img/sesion1.jpg", caption: "Primera sesión" }` — add or remove freely |
-| `missions[]` | Projects. `image` = card cover, `gallery` = list of screenshots shown in the mission's detail card. `status`: `pendiente` · `curso` · `lanzado` (only mark `lanzado` when it's real — it becomes a planet in the background) |
+| `missions[]` | Projects. `image` = card cover, `gallery` = list of screenshots shown in the mission's detail card. `status`: `pendiente` · `curso` · `beta` · `lanzado` (only mark `lanzado` when it's real — it becomes a planet in the background) |
 | `collab` | Partner areas/clubs, their joint missions, and an optional `image` of the joint project |
 
 **Photos:** put them in an `img/` folder and use normal paths, e.g. `photo: "img/miguel.jpg"`. Square images around 600×600 for council photos; 1600×900 for mission covers. Keep each image under ~500 KB (compress with squoosh.app).

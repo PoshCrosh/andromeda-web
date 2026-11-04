@@ -87,7 +87,7 @@ main, footer{position:relative; z-index:1}
 /* ---------- Top bar ---------- */
 .bar{
   position:sticky; top:env(safe-area-inset-top, 0px); z-index:30;
-  background:rgba(7,10,20,.78); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  background:rgba(7,10,20,.9);
   border-bottom:1px solid var(--rule);
 }
 .bar .wrap{display:flex; align-items:center; gap:var(--s3); height:56px}
@@ -331,6 +331,7 @@ section{position:relative}
 .dot{width:7px; height:7px; border-radius:50%; display:inline-block; flex:none}
 .dot.live{background:var(--cyan); box-shadow:0 0 0 3px rgba(102,214,230,.14)}
 .dot.wip{background:transparent; border:1.5px solid var(--violet)}
+.dot.beta{background:var(--violet); box-shadow:0 0 0 3px rgba(142,124,248,.16)}
 .dot.todo{background:transparent; border:1.5px dashed var(--ink-3)}
 .view-toggle{display:none; border:1px solid var(--rule-strong); border-radius:2px; margin-bottom:var(--s3); width:max-content; max-width:100%}
 .js .view-toggle{display:inline-flex}
@@ -540,6 +541,8 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
 .h-spoke{stroke:var(--rule); stroke-width:1; stroke-dasharray:2 5; vector-effect:non-scaling-stroke; transition:stroke .5s var(--ease)}
 .h-spoke.on{stroke:var(--violet); stroke-dasharray:none}
 .h-ring{fill:none; stroke:var(--rule); stroke-width:1; vector-effect:non-scaling-stroke}
+.nm-short{display:none}
+@media (max-width:385px){ .hnode{width:84px!important; transform:translate(-50%, -22px)!important} .hrole{font-size:7.5px!important; letter-spacing:.06em!important} .hname{font-size:10.5px!important} .hepta-center{width:32%!important} .hc-duty{font-size:10px!important} }
 .hepta-nodes{list-style:none; margin:0; padding:0; position:absolute; inset:0}
 .hnode{position:absolute; left:calc(var(--x) * 1%); top:calc(var(--y) * 1%); width:160px; transform:translate(-50%, -38px); text-align:center}
 .hbtn{display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; background:none; border:0; padding:0; cursor:pointer}
@@ -566,6 +569,7 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
   .hrole{font-size:8.5px; letter-spacing:.1em; margin-top:2px}
   .hname{font-size:11.5px} .hnode.tbd .hname{font-size:12.5px}
   /* narrower center so its text never touches the corner labels */
+  .nm-full{display:none} .nm-short{display:inline}
   .hepta-center{width:34%} .hc-logo{width:24px; height:24px} .hc-kicker{display:none} .hc-role{font-size:14px} .hc-duty{font-size:10.5px; line-height:1.35}
 }
 
@@ -843,7 +847,7 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
         <h2 class="h2 split" id="h-mis">Misiones <em>y nuevos mundos</em></h2>
         <div>
           <p>Cada proyecto es una misión. Cuando se lanza, se vuelve un nuevo mundo en nuestra galaxia.</p>
-          <div class="legend mono"><span><i class="dot todo"></i>Por despegar</span><span><i class="dot wip"></i>En curso</span><span><i class="dot live"></i>Lanzado</span></div>
+          <div class="legend mono"><span><i class="dot todo"></i>Por despegar</span><span><i class="dot wip"></i>En curso</span><span><i class="dot beta"></i>Beta</span><span><i class="dot live"></i>Lanzado</span></div>
         </div>
       </div>
 
@@ -890,7 +894,7 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
         </article>
         <article class="mission open wide">
           <div class="m-body">
-            <span class="mono"><b>Misión 00?</b> · Sin asignar</span>
+            <span class="mono"><b>Misión 003</b> · Sin asignar</span>
             <h3 class="m-title">La siguiente puede ser tuya.</h3>
             <a data-discord href="https://discord.gg/Y2evPjrW9u" target="_blank" rel="noopener">Propón una misión en #ideas ↗</a>
           </div>
@@ -1124,12 +1128,12 @@ const CONFIG = {
 
   /* — Consejo: agrega, quita o reordena roles aquí; la página se ajusta sola — */
   council: [
-    { role: "Presidente",     name: "Miguel Becerra Alcala",           duty: "Fija el rumbo del club y lo representa ante la universidad.", photo: "" },
-    { role: "Vicepresidente", name: "Leonardo Ramses Barbosa Sanchez", duty: "Coordina misiones y tripulaciones.",                         photo: "" },
-    { role: "Logística",      name: "Arturo Del Callejo Salgado",      duty: "Espacios, calendario y operación de cada sesión.",          photo: "" },
-    { role: "Intendente",     name: "Por confirmar",                   duty: "Materiales, equipo e inventario de la nave.",               photo: "" },
-    { role: "Tesorero",       name: "Por confirmar",                   duty: "Presupuesto, patrocinios y cuentas claras.",                photo: "" },
-    { role: "Comunicación",   name: "Por confirmar",                   duty: "Redes, contenido y lo que se cuenta afuera.",               photo: "" }
+    { role: "Presidente",             name: "Miguel Becerra Alcala", short: "Miguel Becerra",            duty: "Fija el rumbo del club y lo representa ante la universidad.",        photo: "" },
+    { role: "Vicepresidente",         name: "Martin Alejandro Mosquera Montúfar", short: "Martin Mosquera", duty: "Coordina misiones y tripulaciones, y suple a la presidencia.",      photo: "" },
+    { role: "Proyectos",              name: "Arturo Del Callejo Salgado", short: "Arturo Del Callejo",       duty: "Elige, organiza y acompaña cada misión hasta su lanzamiento.",       photo: "" },
+    { role: "Finanzas",               name: "Cristian Zavala Velasco", short: "Cristian Zavala",          duty: "Presupuesto, patrocinios y cuentas claras.",                         photo: "" },
+    { role: "Comunicación",           name: "Violeta Serrano Armenta", short: "Violeta Serrano",          duty: "Redes, contenido y lo que se cuenta afuera.",                        photo: "" },
+    { role: "Responsabilidad Social", name: "Leonardo Ramses Sanchez Barbosa", short: "Leonardo Sanchez",  duty: "Conecta al club con la comunidad y con proyectos de impacto social.", photo: "" }
   ],
 
   /* — Bitácora visual (tira de fotos en «Qué es»): agrega o quita fotos libremente — */
@@ -1142,13 +1146,14 @@ const CONFIG = {
   ],
 
   /* — Misiones —
-     status: "pendiente" (Por despegar) · "curso" (En curso) · "lanzado" (Lanzado: se vuelve planeta en el fondo)
+     status: "pendiente" (Por despegar) · "curso" (En curso) · "beta" (Beta: ya se puede probar) · "lanzado" (Lanzado: se vuelve planeta en el fondo)
      team: códigos de disciplina → PRG JDV ART 3DA AUD NAR HW COM
      image: portada de la tarjeta · gallery: capturas de la ficha (lista de imágenes)                                */
   missions: [
-    { num: "001", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para el primer proyecto de la tripulación.", link: "", image: "", gallery: [] },
-    { num: "002", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para un proyecto real de la tripulación.", link: "", image: "", gallery: [] },
-    { num: "003", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para un proyecto real de la tripulación.", link: "", image: "", gallery: [] }
+    { num: "001", title: "Constela", type: "Red social", status: "curso", team: ["PRG", "ART", "COM"],
+      desc: "Una red social que conecta a estudiantes del Tec de todos los campus de México. En diseño.", link: "", image: "", gallery: [] },
+    { num: "002", title: "Icebreakers", type: "App", status: "beta", team: ["PRG", "ART", "NAR"],
+      desc: "Cartas digitales para romper el hielo en la mesa: preguntas por categoría y seguimientos que cambian si deslizas sí o no.", link: "", image: "", gallery: [] }
   ],
 
   /* — Colaboración: fichas de cada planeta.
@@ -1195,7 +1200,7 @@ const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return
 
 /* ---------- apply CONFIG to the page ---------- */
 const cfgGet = path => path.split(".").reduce((o, k) => o == null ? o : o[k], CONFIG);
-const STATUS = { pendiente: ["todo", "Por despegar"], curso: ["wip", "En curso"], lanzado: ["live", "Lanzado"] };
+const STATUS = { pendiente: ["todo", "Por despegar"], curso: ["wip", "En curso"], beta: ["beta", "Beta"], lanzado: ["live", "Lanzado"] };
 (() => {
   $$("[data-cfg]").forEach(el => { const v = cfgGet(el.dataset.cfg); if (v != null && v !== "") el.textContent = v; });
   $$("[data-cfg-href]").forEach(el => { const v = cfgGet(el.dataset.cfgHref); if (v) el.href = v; });
@@ -1219,7 +1224,7 @@ const STATUS = { pendiente: ["todo", "Por despegar"], curso: ["wip", "En curso"]
     $(".hepta-nodes", hepta).innerHTML = crew.map((m, k) => `<li class="hnode${m.adv ? " advisor" : ""}${pending(m.name) ? " tbd" : ""}" style="--x:${pts[k][0].toFixed(2)};--y:${pts[k][1].toFixed(2)}" data-k="${k}">
         <button type="button" class="hbtn" aria-describedby="hduty-${k}">
           <span class="hphoto"${m.photo ? ` style="background:center / cover no-repeat url('${esc(m.photo)}')"` : ""}></span>
-          <span class="hrole">${esc(m.role)}</span><span class="hname">${esc(m.name || "Por confirmar")}</span>
+          <span class="hrole">${esc(m.role)}</span><span class="hname"><span class="nm-full">${esc(m.name || "Por confirmar")}</span><span class="nm-short">${esc(m.short || m.name || "Por confirmar")}</span></span>
         </button><span class="sr-only" id="hduty-${k}">${esc(m.duty || "")}${m.sub ? " · " + esc(m.sub) : ""}</span></li>`).join("");
     const cRole = $(".hc-role", hepta), cDuty = $(".hc-duty", hepta), def = [cRole.textContent, cDuty.textContent];
     const show = k => {
@@ -1227,6 +1232,7 @@ const STATUS = { pendiente: ["todo", "Por despegar"], curso: ["wip", "En curso"]
       $$(".hnode", hepta).forEach(el => el.classList.toggle("on", +el.dataset.k === k));
       $$(".h-spoke", hepta).forEach(el => el.classList.toggle("on", +el.dataset.k === k));
       const m = crew[k]; cRole.textContent = m ? m.role : def[0]; cDuty.textContent = m ? (m.duty || "") + (m.sub ? " · " + m.sub : "") : def[1];
+      { const hint = $(".council-hint"); if (hint){ hint.dataset.def = hint.dataset.def || hint.textContent; hint.textContent = m && innerWidth <= 600 ? m.role + " · " + (m.name || "Por confirmar") : hint.dataset.def; } }
     };
     $$(".hnode", hepta).forEach(el => { const k = +el.dataset.k, b = $(".hbtn", el);
       b.addEventListener("pointerenter", () => show(k)); b.addEventListener("focus", () => show(k)); b.addEventListener("click", () => show(k));
@@ -1238,7 +1244,7 @@ const STATUS = { pendiente: ["todo", "Por despegar"], curso: ["wip", "En curso"]
     $$(".mission[data-num]", host).forEach(a => a.remove());
     CONFIG.missions.forEach(m => {
       const [cls, label] = STATUS[m.status] || STATUS.pendiente, a = document.createElement("article");
-      a.className = "mission tilt"; a.dataset.num = m.num; a.dataset.type = m.type || "Por definir"; a.dataset.status = STATUS[m.status] ? m.status : "pendiente"; a.dataset.team = (m.team || []).join(" ");
+      a.className = "mission tilt" + (CONFIG.missions.length % 3 === 2 && CONFIG.missions.indexOf(m) >= CONFIG.missions.length - 2 ? " wide" : ""); a.dataset.num = m.num; a.dataset.type = m.type || "Por definir"; a.dataset.status = STATUS[m.status] ? m.status : "pendiente"; a.dataset.team = (m.team || []).join(" ");
       a.dataset.link = m.link || "";
       const thumb = m.image ? `<img src="${esc(m.image)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : `<span class="ph">Imagen pendiente</span><span class="badge-ph">Espacio reservado</span>`;
       a.innerHTML = `<div class="thumb"><span class="num" aria-hidden="true">${esc(m.num)}</span>${thumb}</div>
@@ -1545,7 +1551,7 @@ function initUniverse(){
   const Q = [
     { stars: 2600, dust: 140, deep: 70,  hero: 22000, gal: 1300, neb: 0,  rocks: 22, seg: 28, pr: 1.5, bloom: 0 },
     { stars: 6000, dust: 380, deep: 160, hero: 40000, gal: 2600, neb: 7,  rocks: 30, seg: 44, pr: 1.5, bloom: .25 },
-    { stars: 10000, dust: 650, deep: 260, hero: 60000, gal: 4200, neb: 11, rocks: 38, seg: 64, pr: 2, bloom: .5 }
+    { stars: 10000, dust: 650, deep: 260, hero: 60000, gal: 4200, neb: 11, rocks: 38, seg: 64, pr: 1.5, bloom: .5 }
   ][tier];
 
   const canvas = document.createElement("canvas"); canvas.id = "universe"; canvas.setAttribute("aria-hidden", "true");
@@ -1554,6 +1560,7 @@ function initUniverse(){
   try { renderer = new T.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" }); }
   catch(e){ canvas.remove(); introOn = false; endIntro(); return; }
   galaxyStarted = true;
+  renderer.debug.checkShaderErrors = false;     /* production: never block a frame waiting on shader logs */
   let PR = Math.min(MOBILE ? 1.25 : Q.pr, devicePixelRatio || 1);
   renderer.setPixelRatio(PR); renderer.setClearColor(0x070a14, 1);
 
@@ -2221,7 +2228,7 @@ function initUniverse(){
         label.style.transform = `translate(${(right ? lx + rr + 10 : lx - rr - 10).toFixed(1)}px, ${(ly - 7).toFixed(1)}px) translateX(${right ? 0 : -100}%)`;
       }
     }
-    return { render, get vis(){ return vis; } };
+    return { render, scene: cs, cam, get vis(){ return vis; } };
   })();
 
   /* ======================= camera journey ======================= */
@@ -2368,6 +2375,24 @@ function initUniverse(){
     if (String(getSelection())) return;
     hovered.h.onClick();
   });
+
+  /* ======================= pre-compile: every landmark's shaders now, so scrolling never stalls on a first-time compile ======================= */
+  (function precompile(){
+    const rt = new T.WebGLRenderTarget(4, 4);
+    const warm = (sc, cam) => {
+      const hidden = [], culled = [];
+      sc.traverse(o => {
+        if (!o.visible){ hidden.push(o); o.visible = true; }
+        if (o.frustumCulled){ culled.push(o); o.frustumCulled = false; }
+        const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(mm => Object.values(mm.uniforms || {}).forEach(u => { if (u && u.value && u.value.isTexture) renderer.initTexture(u.value); }));
+      });
+      try { renderer.compile(sc, cam); renderer.setRenderTarget(rt); renderer.render(sc, cam); } catch(e){}
+      renderer.setRenderTarget(null);
+      hidden.forEach(o => { o.visible = false; }); culled.forEach(o => { o.frustumCulled = true; });
+    };
+    warm(scene, camera); warm(CX.scene, CX.cam); warm(hud, hudCam);
+    rt.dispose();
+  })();
 
   /* ======================= frame ======================= */
   let tx = 0, ty = 0, ctx = 0, cty = 0;
@@ -2649,7 +2674,7 @@ function initUniverse(){
   function layout(){
     let best = -1, bi = 0;
     cards.forEach((c, i) => {
-      const a = angle + i * Math.PI * 2 / n, x = Math.sin(a) * Rx, z = Math.cos(a) * Rz, dep = (Math.cos(a) + 1) / 2;
+      const a = angle + i * Math.PI * 2 / Math.max(n, 3), x = Math.sin(a) * Rx, z = Math.cos(a) * Rz, dep = (Math.cos(a) + 1) / 2;
       c.style.transform = `translate3d(${x}px,0,${z}px) rotateX(${TILT}deg)`;
       c.style.setProperty("--dim", (.82 * (1 - Math.pow(dep, 1.2))).toFixed(3));
       c.style.zIndex = Math.round(dep * 100);
@@ -2661,7 +2686,7 @@ function initUniverse(){
   }
   const norm = a => Math.atan2(Math.sin(a), Math.cos(a));
   function bringFront(i, then){
-    const target = angle - norm(angle + i * Math.PI * 2 / n);
+    const target = angle - norm(angle + i * Math.PI * 2 / Math.max(n, 3));
     if (RM){ angle = target; layout(); return then && then(); }
     tween = { from: angle, to: target, t0: performance.now(), dur: 1000, then }; vel = 0; run();
   }
