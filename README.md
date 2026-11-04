@@ -1,6 +1,6 @@
 # Andromeda · website
 
-Static site for the Andromeda student club (Tec de Monterrey, Guadalajara). No build step, no framework, nothing to install — every library and font is in `assets/`, so the site doesn't depend on any outside CDN.
+Static site for the Andromeda student club (Tec de Monterrey, Guadalajara). No build step, no framework — every library and font is in `assets/`, so the site doesn't depend on any outside CDN.
 
 ```
 index.html             the whole site (HTML + CSS + JS)
@@ -10,31 +10,30 @@ og.jpg                 preview image when the link is shared (WhatsApp, Discord,
 assets/fonts.css       self-hosted fonts (Archivo, Instrument Sans/Serif, IBM Plex Mono)
 assets/fonts/          font files
 assets/js/             three.js, GSAP + ScrollTrigger, Lenis
+img/                   (create it) club photos, mission covers and screenshots
 vercel.json            caching + security headers
-robots.txt
+deploy.bat             Windows: double-click to publish
+deploy.command         Mac: double-click to publish
+.vercelignore          keeps the helper files off the live site
 ```
 
-## Deploy to Vercel
+## Publishing from your computer
 
-**Option A — drag & drop (fastest)**
-1. Unzip this folder.
-2. Go to vercel.com → **Add New… → Project**, and drag the `andromeda-web` folder onto the page.
-3. Framework preset: **Other**. Leave Build Command and Output Directory empty. Deploy.
-
-**Option B — GitHub (best for a team)**
-1. Create a GitHub repo and push the contents of this folder to it.
-2. vercel.com → **Add New… → Project → Import** the repo. Preset **Other**, no build command. Deploy.
-3. From then on, every push to `main` redeploys the site automatically.
-
-**Option C — CLI**
+One-time setup:
 ```
 npm i -g vercel
-cd andromeda-web
-vercel          # preview
-vercel --prod   # production
+vercel login
+cd path\to\andromeda-web
+vercel link      # pick your existing Vercel project so the URL stays the same
 ```
 
-## After the first deploy (once you know the URL)
+Every update after that: save your changes, then double-click `deploy.bat` (Windows) / `deploy.command` (Mac), or run `vercel --prod` in this folder.
+
+Want to preview first without touching the live site? Run `vercel` (no `--prod`) — you get a private test URL.
+
+Note: if the Vercel project is also connected to a GitHub repo, a later push to that repo will redeploy whatever is on GitHub. Either disconnect Git in Vercel (Settings → Git) or keep GitHub up to date too.
+
+## Link previews
 
 Link previews on WhatsApp/Facebook/Discord need a *full* URL for the image. In `index.html`, change both
 `/og.jpg` → `https://YOUR-DOMAIN/og.jpg` (the `og:image` and `twitter:image` lines near the top).
@@ -51,11 +50,12 @@ Everything the club fills in over time lives in one place: the `CONFIG` object a
 | `instagram`, `tiktok` | Leave empty to hide; fill `handle` + `url` to show them |
 | `contactEmail` | Footer email + copy button |
 | `sessions` | Schedule, place, first session date |
-| `advisor` | Faculty advisor name, department, photo |
-| `council` | Board roles — add, remove or reorder; the page adjusts |
-| `missions[]` | Projects. `status`: `pendiente` · `curso` · `lanzado` (only mark `lanzado` when it's real — it becomes a planet in the background) |
-| `collab` | Partner areas/clubs and their joint missions |
+| `advisor` | Faculty advisor name, department, photo (top corner of the heptagon) |
+| `council` | Board roles — add, remove or reorder; the heptagon redraws itself with that many corners |
+| `gallery` | "Bitácora visual" photo strip: `{ image: "img/sesion1.jpg", caption: "Primera sesión" }` — add or remove freely |
+| `missions[]` | Projects. `image` = card cover, `gallery` = list of screenshots shown in the mission's detail card. `status`: `pendiente` · `curso` · `lanzado` (only mark `lanzado` when it's real — it becomes a planet in the background) |
+| `collab` | Partner areas/clubs, their joint missions, and an optional `image` of the joint project |
 
-**Photos:** put them in an `img/` folder and use normal paths, e.g. `photo: "img/miguel.jpg"`. Square images around 600×600 work best.
+**Photos:** put them in an `img/` folder and use normal paths, e.g. `photo: "img/miguel.jpg"`. Square images around 600×600 for council photos; 1600×900 for mission covers. Keep each image under ~500 KB (compress with squoosh.app).
 
-To test locally before pushing: `npx serve .` (or `python3 -m http.server`) and open the printed address. Opening `index.html` by double-clicking won't load the fonts/libraries, because they use absolute `/assets/…` paths.
+To test locally before publishing: `npx serve .` and open the printed address. Opening `index.html` by double-clicking won't load the fonts/libraries, because they use absolute `/assets/…` paths.

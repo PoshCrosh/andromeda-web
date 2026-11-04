@@ -173,11 +173,13 @@ main, footer{position:relative; z-index:1}
   transition:opacity .6s var(--ease), color .4s var(--ease);
 }
 .skip:hover{color:var(--ink)}
+.hint-touch{display:none}
+@media (hover:none){ .hint-fine{display:none} .hint-touch{display:inline} }
 .skip[hidden]{display:none}
 
 /* ---------- Section scaffolding ---------- */
 section{position:relative}
-.sec{padding-block:clamp(72px, 11vw, 160px)}
+.sec{padding-block:clamp(64px, 8.5vw, 128px)}
 .sec + .sec{border-top:1px solid var(--rule)}
 .sec-head{display:flex; align-items:center; gap:var(--s2); margin-bottom:clamp(40px, 6vw, 72px)}
 .sec-head .ticks{flex:1; height:9px; min-width:24px;
@@ -394,7 +396,12 @@ section{position:relative}
   .mission.feature{grid-column:1 / -1; grid-row:auto}
   .mission.feature .thumb{min-height:220px; aspect-ratio:16/9; flex:none}
 }
-@media (max-width:600px){ .missions{grid-template-columns:minmax(0,1fr)} .mission,.mission.wide,.mission.feature{grid-column:1 / -1} }
+@media (max-width:600px){
+  .missions{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:12px; background:none; border:0; padding-bottom:8px; scrollbar-width:none}
+  .missions::-webkit-scrollbar{display:none}
+  .mission,.mission.wide,.mission.feature{flex:0 0 84%; scroll-snap-align:start; border:1px solid var(--rule)}
+  .mission .thumb{aspect-ratio:16/9}
+}
 
 /* mission detail drawer */
 dialog.mdetail{
@@ -416,6 +423,21 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
 .md-shots{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px}
 .md-shots div{aspect-ratio:16/10; background:repeating-linear-gradient(135deg, rgba(236,232,223,.045) 0 1px, transparent 1px 10px), var(--bg-2); border:1px solid var(--rule); display:flex; align-items:center; justify-content:center}
 .md-shots div:first-child{grid-column:1 / -1}
+.md-shots div{position:relative; overflow:hidden}
+.md-shots img,.cd-image img,.g-item img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.cd-image{position:relative; overflow:hidden; aspect-ratio:16/9; border:1px solid var(--rule); display:flex; align-items:center; justify-content:center;
+  background:repeating-linear-gradient(135deg, rgba(236,232,223,.045) 0 1px, transparent 1px 10px), var(--bg-2)}
+/* bitácora visual: one row of photos, swipes sideways when it doesn't fit */
+.gallery-wrap{grid-column:1 / -1; margin-top:var(--s4); min-width:0}
+.gallery-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+.gallery{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(220px, 1fr); gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:6px; scrollbar-width:thin}
+.g-item{position:relative; margin:0; aspect-ratio:4/3; scroll-snap-align:start; overflow:hidden; border:1px solid var(--rule); display:flex; align-items:center; justify-content:center;
+  background:repeating-linear-gradient(135deg, rgba(236,232,223,.045) 0 1px, transparent 1px 10px), var(--bg-2)}
+.g-item:nth-child(even){aspect-ratio:4/3}
+.g-ph{color:var(--ink-3)}
+.g-item figcaption{position:absolute; left:10px; bottom:8px; font-size:10px; color:var(--ink-2); text-shadow:0 0 8px var(--bg)}
+.g-item.has figcaption{color:var(--ink)}
+@media (min-width:1100px){ .g-hint{visibility:hidden} }
 .md-desc{color:var(--ink-2); margin:0}
 
 /* ---------- 04 Cómo funciona: flight path ---------- */
@@ -438,11 +460,9 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
 .no-anim .stage .tl-step{color:var(--ink)} .no-anim .stage p{color:var(--ink-2)}
 .no-anim .stage::before{background:var(--violet); border-color:var(--violet)}
 @media (min-width:1000px){
-  .flight.path .flight-pin{min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding-block:var(--s5)}
   .flight.path .sec-head{margin-bottom:var(--s4)}
   .flight.path .h2{font-size:clamp(38px, 4.6vw, 68px)}
-  .flight.path .flight-stage{--row:132px; --band:240px; width:min(100%, calc((100vh - 600px) * 1200 / 230)); min-width:min(100%, 760px); margin:var(--s5) auto 0; padding-block:var(--row)}
-  @media (max-height:820px){ .flight.path .cycle-aside{display:none} .flight.path .flight-stage{margin-top:var(--s2)} }
+  .flight.path .flight-stage{--row:132px; --band:240px; width:100%; margin:var(--s4) auto 0; padding-block:var(--row)}
   .flight.path .flight-svg{display:block; width:100%; height:auto; aspect-ratio:1200/230; overflow:visible}
   .flight.path .stages{position:absolute; inset:0; padding:0; margin:0}
   .flight.path .stages::before{display:none}
@@ -485,7 +505,8 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
 .c-item:hover,.c-item.hot{background:linear-gradient(90deg, rgba(142,124,248,.1), transparent 70%)}
 .c-item:hover span:first-child,.c-item.hot span:first-child{color:var(--violet)}
 .c-areas{margin-top:var(--s4); display:flex; flex-direction:column; gap:12px}
-.c-head{display:block; margin-top:var(--s4); margin-bottom:var(--s1)}
+.c-head{display:block; margin-top:var(--s4); margin-bottom:12px}
+.c-outer .c-chip{font-size:12px; padding:9px 13px}
 .collab-copy .collab-list{margin-top:0}
 .c-note{margin-top:var(--s3) !important; font-size:15px}
 .c-note a{color:var(--cyan); text-decoration:none; border-bottom:1px solid rgba(102,214,230,.35)}
@@ -509,6 +530,45 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
 #cdetail .btn{align-self:flex-start}
 @media (max-width:860px){ .csys{position:relative; top:auto; justify-self:center; max-width:520px} }
 
+/* council heptagon: one member on each corner, details in the middle */
+.council-wrap{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:var(--s5); align-items:center}
+.council-wrap .council-top{display:flex; flex-direction:column; align-items:flex-start; gap:var(--s3); margin:0}
+.council-hint{color:var(--ink-3)}
+.hepta{position:relative; width:100%; max-width:660px; aspect-ratio:1; justify-self:center; margin-block:var(--s5) var(--s8)}
+.hepta-lines{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+.h-poly{fill:rgba(142,124,248,.025); stroke:var(--rule-strong); stroke-width:1; vector-effect:non-scaling-stroke}
+.h-spoke{stroke:var(--rule); stroke-width:1; stroke-dasharray:2 5; vector-effect:non-scaling-stroke; transition:stroke .5s var(--ease)}
+.h-spoke.on{stroke:var(--violet); stroke-dasharray:none}
+.h-ring{fill:none; stroke:var(--rule); stroke-width:1; vector-effect:non-scaling-stroke}
+.hepta-nodes{list-style:none; margin:0; padding:0; position:absolute; inset:0}
+.hnode{position:absolute; left:calc(var(--x) * 1%); top:calc(var(--y) * 1%); width:160px; transform:translate(-50%, -38px); text-align:center}
+.hbtn{display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; background:none; border:0; padding:0; cursor:pointer}
+.hphoto{display:block; width:76px; height:76px; border-radius:50%; border:1px solid var(--rule-strong); transition:transform .6s var(--ease), border-color .5s var(--ease), box-shadow .6s var(--ease);
+  background:radial-gradient(circle at 50% 40%, rgba(236,232,223,.09) 0 20%, transparent 20.5%), radial-gradient(ellipse at 50% 108%, rgba(236,232,223,.08) 0 44%, transparent 44.5%), var(--bg-2)}
+.hrole{font-family:var(--f-mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2); margin-top:4px}
+.hname{font-family:var(--f-display); font-stretch:108%; font-weight:650; font-size:15px; line-height:1.2; color:var(--ink); text-wrap:balance}
+.hnode.tbd .hname{font-family:var(--f-serif); font-style:italic; font-weight:400; font-stretch:100%; color:var(--ink-3); font-size:16px}
+.hnode.advisor .hphoto{border-color:rgba(142,124,248,.6); box-shadow:0 0 0 4px rgba(142,124,248,.08)}
+.hnode.advisor .hrole{color:var(--violet)}
+.hnode.on .hphoto,.hbtn:hover .hphoto{transform:scale(1.08); border-color:var(--ink); box-shadow:0 0 0 5px rgba(142,124,248,.14), 0 0 24px rgba(142,124,248,.3)}
+.hepta.focus .hnode:not(.on){opacity:.55}
+.hnode{transition:opacity .5s var(--ease)}
+.hepta-center{position:absolute; left:50%; top:50%; width:38%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; pointer-events:none}
+.hc-logo{width:34px; height:34px; margin-bottom:4px}
+.hc-kicker{font-size:10px}
+.hc-role{font-family:var(--f-display); font-stretch:115%; font-weight:750; font-size:clamp(18px,1.8vw,24px); line-height:1.05}
+.hc-duty{font-size:13.5px; color:var(--ink-2); line-height:1.45}
+@media (max-width:980px){ .council-wrap{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:600px){
+  .hepta{margin-block:var(--s6) var(--s8)}
+  .hnode{width:96px; transform:translate(-50%, -25px)}
+  .hphoto{width:50px; height:50px}
+  .hrole{font-size:8.5px; letter-spacing:.1em; margin-top:2px}
+  .hname{font-size:11.5px} .hnode.tbd .hname{font-size:12.5px}
+  /* narrower center so its text never touches the corner labels */
+  .hepta-center{width:34%} .hc-logo{width:24px; height:24px} .hc-kicker{display:none} .hc-role{font-size:14px} .hc-duty{font-size:10.5px; line-height:1.35}
+}
+
 /* ---------- 06 Consejo ---------- */
 .council-top{display:flex; justify-content:space-between; align-items:end; gap:var(--s3); flex-wrap:wrap; margin-bottom:clamp(40px,5vw,64px)}
 .council-top p{margin:0; color:var(--ink-2); max-width:36ch}
@@ -529,7 +589,17 @@ dialog.mdetail[open]{animation:slidein .7s var(--ease)}
 .council .name{margin:0; color:var(--ink-2); font-size:15px}
 .council .duty{margin:var(--s1) 0 0; font-size:14px; color:var(--ink-3); line-height:1.5}
 @media (max-width:1100px){ .council{grid-template-columns:repeat(3, minmax(0,1fr))} .council .advisor{grid-row:auto} }
-@media (max-width:600px){ .council{grid-template-columns:repeat(2, minmax(0,1fr)); gap:var(--s3) var(--s2)} }
+@media (max-width:600px){
+  .council{grid-template-columns:repeat(3, minmax(0,1fr)); gap:var(--s3) 10px}
+  .council .portrait{aspect-ratio:1}
+  .council .portrait .mono{font-size:8.5px; left:6px; top:6px} .council .portrait .mono.r{display:none}
+  .council li:not(.advisor) .duty{display:none}
+  .council h3{font-size:14px; margin-top:10px} .council .name{font-size:12.5px; line-height:1.35}
+  .council h3.tbd{font-size:16px}
+  .council .advisor{grid-column:1 / -1; display:grid; grid-template-columns:96px minmax(0,1fr); column-gap:14px; align-content:start}
+  .council .advisor .portrait{grid-row:1 / span 4}
+  .council .advisor .adv-tag,.council .advisor h3{margin-top:0}
+}
 
 /* ---------- 07 Únete ---------- */
 .join{position:relative; overflow:hidden}
@@ -640,7 +710,7 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
       </dl>
       <h1 class="wordmark fade" id="wm">ANDROMEDA</h1>
       <div class="fig fade d1">
-        <span class="mono">Fig. 01 · Galaxia de Andrómeda (M31) · mueve el cursor para inclinarla</span>
+        <span class="mono">Fig. 01 · Galaxia de Andrómeda (M31) · <span class="hint-fine">mueve el cursor para inclinarla</span><span class="hint-touch">inclina el teléfono para moverla</span></span>
         <span class="mono">Est. <span data-cfg="foundedYear">2026</span> · Tripulación 01</span>
       </div>
     </div>
@@ -663,12 +733,21 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
       <div class="grid12">
         <div class="manifesto-lead">
           <h2 class="sr-only" id="h-que">Qué es Andromeda</h2>
-          <p class="big split">Las buenas ideas se mueren en un chat de grupo. Aquí <em>las terminamos.</em> Juntamos a quien programa con quien dibuja, compone, escribe y diseña, y trabajamos como un estudio de verdad: con roles, fechas y un lanzamiento al final.</p>
+          <p class="big split">Las buenas ideas se mueren en un chat de grupo. Aquí <em>las terminamos.</em></p>
         </div>
         <div class="manifesto-side mono">Equipos mixtos<br>Productos reales<br>Un lanzamiento por semestre</div>
         <div class="manifesto-note">
-          <p>El Tec ya tiene clubes especializados en programación, robótica, ingeniería, salud y mucho más. Son buenos en lo suyo. Andromeda es el lugar donde esas disciplinas se cruzan con el arte, el sonido y la narrativa.</p>
-          <p>Nadie necesita experiencia previa. Necesitas ganas de terminar algo y enseñarlo.</p>
+          <p>Sin experiencia previa: solo ganas de terminar algo y enseñarlo.</p>
+        </div>
+        <div class="gallery-wrap">
+          <div class="gallery-head"><span class="mono"><b>Bitácora visual</b></span><span class="mono g-hint">Desliza →</span></div>
+          <div class="gallery" id="gallery" tabindex="0" aria-label="Fotos del club">
+            <figure class="g-item"><span class="mono g-ph">Foto 01</span><figcaption class="mono">Primera sesión</figcaption></figure>
+            <figure class="g-item"><span class="mono g-ph">Foto 02</span><figcaption class="mono">La tripulación</figcaption></figure>
+            <figure class="g-item"><span class="mono g-ph">Foto 03</span><figcaption class="mono">Sesión de trabajo</figcaption></figure>
+            <figure class="g-item"><span class="mono g-ph">Foto 04</span><figcaption class="mono">Demo Day</figcaption></figure>
+            <figure class="g-item"><span class="mono g-ph">Foto 05</span><figcaption class="mono">Detrás de cámaras</figcaption></figure>
+          </div>
         </div>
         <div class="compare-wrap">
           <table class="compare">
@@ -682,10 +761,8 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
             </thead>
             <tbody>
               <tr><th scope="row">Quién entra</th><td class="them">Estudiantes de una carrera afín</td><td class="us us-col">Programación, diseño, comunicación, arte, música y letras en la misma mesa</td></tr>
-              <tr><th scope="row">Qué se hace</th><td class="them">Práctica a fondo en su especialidad</td><td class="us us-col">Juegos, apps, sitios web y prototipos que usa gente real</td></tr>
               <tr><th scope="row">Cómo se trabaja</th><td class="them">Equipos de una especialidad</td><td class="us us-col">Tripulaciones con roles, sprints y revisiones, como en un estudio</td></tr>
               <tr><th scope="row">Cómo termina</th><td class="them">Competencias, retos y entregables técnicos</td><td class="us us-col">Un lanzamiento público: tienda de apps, web, itch.io o Roblox</td></tr>
-              <tr><th scope="row">Qué te llevas</th><td class="them">Dominio técnico de un área</td><td class="us us-col">Portafolio con proyectos publicados y tu nombre en los créditos</td></tr>
             </tbody>
           </table>
         </div>
@@ -839,8 +916,8 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
           <dt class="mono">Estado</dt><dd id="md-status"></dd>
           <dt class="mono">Tripulación</dt><dd id="md-team"></dd>
         </dl>
-        <span class="mono">Capturas · placeholder</span>
-        <div class="md-shots"><div><span class="mono">Captura 01</span></div><div><span class="mono">Captura 02</span></div><div><span class="mono">Captura 03</span></div></div>
+        <span class="mono">Imágenes del proyecto</span>
+        <div class="md-shots" id="md-shots"><div><span class="mono">Portada · por agregar</span></div><div><span class="mono">Captura 01 · por agregar</span></div><div><span class="mono">Captura 02 · por agregar</span></div></div>
         <span class="mono" id="md-link">Enlace · por publicar</span>
       </div>
     </dialog>
@@ -878,17 +955,17 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
       <div class="collab">
         <div class="collab-copy">
           <h2 class="h2 split" id="h-col">No competimos. <em>Orbitamos juntos.</em></h2>
-          <p>La tripulación muestra quién está a bordo. Este sistema muestra con quién trabajamos. Andromeda funciona como un hub: cualquier club, ingeniería o carrera con un proyecto puede entrar en órbita. Ellos ponen la ciencia y la técnica; nosotros ayudamos a que se pueda <strong>usar, ver y presentar</strong>. Programación es nuestra órbita más cercana.</p>
+          <p>Un hub abierto: cualquier club, ingeniería o carrera con un proyecto puede entrar en órbita. Programación es nuestra órbita más cercana.</p>
           <span class="mono c-head">Órbita exterior · clubes y carreras aliadas</span>
-          <ul class="collab-list" aria-label="Clubes y carreras aliadas">
-            <li><button type="button" class="c-item" data-planet="PRG"><span>Programación</span><span>Diseño, sonido y narrativa para su software</span></button></li>
-            <li><button type="button" class="c-item" data-planet="ROB"><span>Robótica</span><span>Interfaces y paneles de control para sus robots</span></button></li>
-            <li><button type="button" class="c-item" data-planet="ELE"><span>Electrónica</span><span>Interfaz, carcasa y presentación de sus prototipos</span></button></li>
-            <li><button type="button" class="c-item" data-planet="MEC"><span>Mecánica</span><span>Modelos 3D, renders y documentación visual</span></button></li>
-            <li><button type="button" class="c-item" data-planet="BIO"><span>Biomedicina</span><span>Apps y visualizaciones para sus datos</span></button></li>
-            <li><button type="button" class="c-item" data-planet="ARQ"><span>Arquitectura y diseño</span><span>Visualización 3D y recorridos virtuales</span></button></li>
-            <li><button type="button" class="c-item" data-planet="EMP"><span>Emprendimiento</span><span>Prototipos y demos para su pitch</span></button></li>
-          </ul>
+          <div class="c-chips c-outer" role="list" aria-label="Clubes y carreras aliadas">
+            <button type="button" class="c-chip" role="listitem" data-planet="PRG">Programación</button>
+            <button type="button" class="c-chip" role="listitem" data-planet="ROB">Robótica</button>
+            <button type="button" class="c-chip" role="listitem" data-planet="ELE">Electrónica</button>
+            <button type="button" class="c-chip" role="listitem" data-planet="MEC">Mecánica</button>
+            <button type="button" class="c-chip" role="listitem" data-planet="BIO">Biomedicina</button>
+            <button type="button" class="c-chip" role="listitem" data-planet="ARQ">Arquitectura y diseño</button>
+            <button type="button" class="c-chip" role="listitem" data-planet="EMP">Emprendimiento</button>
+          </div>
           <div class="c-areas"><span class="mono">Órbita interior · nuestras áreas</span>
             <div class="c-chips">
               <button type="button" class="c-chip" data-planet="JDV">Videojuegos</button>
@@ -928,6 +1005,7 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
         <div class="md-num cd-code" id="cd-code" aria-hidden="true">—</div>
         <h3 class="md-title" id="cd-title"></h3>
         <p class="md-desc" id="cd-line"></p>
+        <div class="cd-image" id="cd-image"><span class="mono">Foto del proyecto en conjunto · por agregar</span></div>
         <dl class="md-facts">
           <dt class="mono">Juntos</dt><dd id="cd-together"></dd>
           <dt class="mono">Órbita</dt><dd id="cd-orbit"></dd>
@@ -943,19 +1021,31 @@ footer{border-top:1px solid var(--rule-strong); padding-block:var(--s8) var(--s5
   <section class="sec" id="consejo" aria-labelledby="h-con">
     <div class="wrap">
       <div class="sec-head"><span class="mono" data-typein><b>06</b> · El Consejo</span><span class="ticks"></span><span class="mono">Mesa directiva <span data-cfg="councilPeriod">fundadora · 2026</span></span></div>
-      <div class="council-top">
-        <h2 class="h2 split" id="h-con">El Consejo</h2>
-        <p>Una asesoría docente y la tripulación fundadora que mantiene la nave en curso. Los roles por confirmar se abren a la tripulación.</p>
+      <div class="council-wrap">
+        <div class="council-top">
+          <h2 class="h2 split" id="h-con">El Consejo</h2>
+          <p>Una asesoría docente y seis roles que mantienen la nave en curso.</p>
+          <span class="mono council-hint">Pasa el cursor o toca cada estación</span>
+        </div>
+        <div class="hepta" id="hepta">
+          <svg class="hepta-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon class="h-poly" points="50.00,10.00 81.27,25.06 89.00,58.90 67.36,86.04 32.64,86.04 11.00,58.90 18.73,25.06"/><line class="h-spoke" data-k="0" x1="50" y1="50" x2="50.00" y2="10.00"/><line class="h-spoke" data-k="1" x1="50" y1="50" x2="81.27" y2="25.06"/><line class="h-spoke" data-k="2" x1="50" y1="50" x2="89.00" y2="58.90"/><line class="h-spoke" data-k="3" x1="50" y1="50" x2="67.36" y2="86.04"/><line class="h-spoke" data-k="4" x1="50" y1="50" x2="32.64" y2="86.04"/><line class="h-spoke" data-k="5" x1="50" y1="50" x2="11.00" y2="58.90"/><line class="h-spoke" data-k="6" x1="50" y1="50" x2="18.73" y2="25.06"/><circle class="h-ring" cx="50" cy="50" r="20.8"/></svg>
+          <div class="hepta-center" aria-live="polite">
+            <span class="logo hc-logo"><svg aria-hidden="true"><use href="#logo"/></svg></span>
+            <span class="mono hc-kicker">Consejo fundador · 2026</span>
+            <span class="hc-role">Siete estaciones</span>
+            <span class="hc-duty">Una asesoría y seis roles que mantienen la nave en curso.</span>
+          </div>
+          <ul class="hepta-nodes" aria-label="Integrantes del consejo">
+            <li class="hnode advisor tbd" style="--x:50.00;--y:10.00" data-k="0"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Asesor/a</span><span class="hname">Por confirmar</span></button></li>
+            <li class="hnode" style="--x:81.27;--y:25.06" data-k="1"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Presidente</span><span class="hname">Miguel Becerra Alcala</span></button></li>
+            <li class="hnode" style="--x:89.00;--y:58.90" data-k="2"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Vicepresidente</span><span class="hname">Leonardo Ramses Barbosa Sanchez</span></button></li>
+            <li class="hnode" style="--x:67.36;--y:86.04" data-k="3"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Logística</span><span class="hname">Arturo Del Callejo Salgado</span></button></li>
+            <li class="hnode tbd" style="--x:32.64;--y:86.04" data-k="4"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Intendente</span><span class="hname">Por confirmar</span></button></li>
+            <li class="hnode tbd" style="--x:11.00;--y:58.90" data-k="5"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Tesorero</span><span class="hname">Por confirmar</span></button></li>
+            <li class="hnode tbd" style="--x:18.73;--y:25.06" data-k="6"><button type="button" class="hbtn"><span class="hphoto"></span><span class="hrole">Comunicación</span><span class="hname">Por confirmar</span></button></li>
+          </ul>
+        </div>
       </div>
-      <ul class="council">
-        <li class="tilt advisor"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">A-00</span><span class="mono r">Foto</span></div><span class="mono adv-tag">Asesor/a</span><h3 class="tbd">Por confirmar</h3><p class="duty">Acompaña la planeación del semestre y conecta al club con la industria.</p></li>
-        <li class="tilt"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">C-01</span><span class="mono r">Foto</span></div><h3>Presidente</h3><p class="name">Miguel Becerra Alcala</p><p class="duty">Fija el rumbo del club y lo representa ante la universidad.</p></li>
-        <li class="tilt"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">C-02</span><span class="mono r">Foto</span></div><h3>Vicepresidente</h3><p class="name">Leonardo Ramses Barbosa Sanchez</p><p class="duty">Coordina misiones y tripulaciones.</p></li>
-        <li class="tilt"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">C-03</span><span class="mono r">Foto</span></div><h3>Logística</h3><p class="name">Arturo Del Callejo Salgado</p><p class="duty">Espacios, calendario y operación de cada sesión.</p></li>
-        <li class="tilt"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">C-04</span><span class="mono r">Foto</span></div><h3>Intendente</h3><p class="name tbd">Por confirmar</p><p class="duty">Materiales, equipo e inventario de la nave.</p></li>
-        <li class="tilt"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">C-05</span><span class="mono r">Foto</span></div><h3>Tesorero</h3><p class="name tbd">Por confirmar</p><p class="duty">Presupuesto, patrocinios y cuentas claras.</p></li>
-        <li class="tilt"><div class="portrait" role="img" aria-label="Foto pendiente"><span class="mono">C-06</span><span class="mono r">Foto</span></div><h3>Comunicación</h3><p class="name tbd">Por confirmar</p><p class="duty">Redes, contenido y lo que se cuenta afuera.</p></li>
-      </ul>
     </div>
   </section>
 
@@ -1042,17 +1132,28 @@ const CONFIG = {
     { role: "Comunicación",   name: "Por confirmar",                   duty: "Redes, contenido y lo que se cuenta afuera.",               photo: "" }
   ],
 
+  /* — Bitácora visual (tira de fotos en «Qué es»): agrega o quita fotos libremente — */
+  gallery: [
+    { image: "", caption: "Primera sesión" },
+    { image: "", caption: "La tripulación" },
+    { image: "", caption: "Sesión de trabajo" },
+    { image: "", caption: "Demo Day" },
+    { image: "", caption: "Detrás de cámaras" }
+  ],
+
   /* — Misiones —
      status: "pendiente" (Por despegar) · "curso" (En curso) · "lanzado" (Lanzado: se vuelve planeta en el fondo)
-     team: códigos de disciplina → PRG JDV ART 3DA AUD NAR HW COM                                                   */
+     team: códigos de disciplina → PRG JDV ART 3DA AUD NAR HW COM
+     image: portada de la tarjeta · gallery: capturas de la ficha (lista de imágenes)                                */
   missions: [
-    { num: "001", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para el primer proyecto de la tripulación.", link: "", image: "" },
-    { num: "002", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para un proyecto real de la tripulación.", link: "", image: "" },
-    { num: "003", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para un proyecto real de la tripulación.", link: "", image: "" }
+    { num: "001", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para el primer proyecto de la tripulación.", link: "", image: "", gallery: [] },
+    { num: "002", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para un proyecto real de la tripulación.", link: "", image: "", gallery: [] },
+    { num: "003", title: "Por confirmar", type: "Por definir", status: "pendiente", team: [], desc: "Espacio reservado para un proyecto real de la tripulación.", link: "", image: "", gallery: [] }
   ],
 
   /* — Colaboración: fichas de cada planeta.
-     Órbita interior = áreas de Andromeda · órbita exterior = clubes y carreras aliadas (ejemplos: Andromeda es un hub abierto) — */
+     Órbita interior = áreas de Andromeda · órbita exterior = clubes y carreras aliadas (ejemplos: Andromeda es un hub abierto)
+     Cada ficha acepta image: "..." para una foto del proyecto en conjunto — */
   collab: {
     JDV: { name: "Videojuegos", line: "Mecánicas, mundos y builds que se pueden jugar.", together: "Llevamos el game feel a otros proyectos: simuladores, juegos serios y demos interactivas.", missions: ["Por confirmar"] },
     ART: { name: "Arte y diseño", line: "Identidad, interfaces e ilustración.", together: "Diseñamos interfaces e identidad visual para los proyectos de clubes y carreras aliadas.", missions: ["Por confirmar"] },
@@ -1102,14 +1203,34 @@ const STATUS = { pendiente: ["todo", "Por despegar"], curso: ["wip", "En curso"]
     el.style.background = `center / cover no-repeat url("${String(v).replace(/"/g, "%22")}")`; el.setAttribute("aria-label", "Foto"); });
   if (DISCORD_URL) $("#discord-label").textContent = DISCORD_URL.replace(/^https?:\/\//, "");
   ["instagram", "tiktok"].forEach(k => { const li = $(`[data-social="${k}"]`); if (li) li.hidden = !(CONFIG[k] && CONFIG[k].handle); });
-  /* council: rebuilt from CONFIG (advisor first) */
-  const council = $(".council");
-  if (council && Array.isArray(CONFIG.council)){
-    const photo = (p, code) => `<div class="portrait" role="img" aria-label="${p ? "Foto" : "Foto pendiente"}"${p ? ` style="background:center / cover no-repeat url('${esc(p)}')"` : ""}><span class="mono">${code}</span><span class="mono r">Foto</span></div>`;
+  /* gallery strip */
+  const gal = $("#gallery");
+  if (gal && Array.isArray(CONFIG.gallery)) gal.innerHTML = CONFIG.gallery.map((g, i) => `<figure class="g-item${g.image ? " has" : ""}">${g.image ? `<img src="${esc(g.image)}" alt="${esc(g.caption || "")}" loading="lazy">` : `<span class="mono g-ph">Foto ${String(i + 1).padStart(2, "0")}</span>`}<figcaption class="mono">${esc(g.caption || "")}</figcaption></figure>`).join("");
+  /* council: a heptagon, one member on each corner (advisor at the top) — built from CONFIG */
+  const hepta = $("#hepta");
+  if (hepta && Array.isArray(CONFIG.council)){
     const pending = v => !v || /^por confirmar$/i.test(v);
     const A = CONFIG.advisor || {};
-    council.innerHTML = `<li class="tilt advisor">${photo(A.photo, "A-00")}<span class="mono adv-tag">Asesor/a</span><h3 class="${pending(A.name) ? "tbd" : ""}">${esc(A.name || "Por confirmar")}</h3>${A.department ? `<p class="name">${esc(A.department)}</p>` : ""}<p class="duty">Acompaña la planeación del semestre y conecta al club con la industria.</p></li>` +
-      CONFIG.council.map((m, i) => `<li class="tilt">${photo(m.photo, "C-" + String(i + 1).padStart(2, "0"))}<h3>${esc(m.role)}</h3><p class="name${pending(m.name) ? " tbd" : ""}">${esc(m.name || "Por confirmar")}</p><p class="duty">${esc(m.duty || "")}</p></li>`).join("");
+    const crew = [{ role: "Asesor/a", name: A.name, duty: "Acompaña la planeación del semestre y conecta al club con la industria.", photo: A.photo, sub: A.department, adv: true }, ...CONFIG.council];
+    const n = crew.length, R = 40, pts = crew.map((_, k) => { const a = -Math.PI / 2 + k * 2 * Math.PI / n; return [50 + R * Math.cos(a), 50 + R * Math.sin(a)]; });
+    $(".hepta-lines", hepta).innerHTML = `<polygon class="h-poly" points="${pts.map(p => p.map(v => v.toFixed(2)).join(",")).join(" ")}"/>` +
+      pts.map((p, k) => `<line class="h-spoke" data-k="${k}" x1="50" y1="50" x2="${p[0].toFixed(2)}" y2="${p[1].toFixed(2)}"/>`).join("") +
+      `<circle class="h-ring" cx="50" cy="50" r="${(R * .52).toFixed(1)}"/>`;
+    $(".hepta-nodes", hepta).innerHTML = crew.map((m, k) => `<li class="hnode${m.adv ? " advisor" : ""}${pending(m.name) ? " tbd" : ""}" style="--x:${pts[k][0].toFixed(2)};--y:${pts[k][1].toFixed(2)}" data-k="${k}">
+        <button type="button" class="hbtn" aria-describedby="hduty-${k}">
+          <span class="hphoto"${m.photo ? ` style="background:center / cover no-repeat url('${esc(m.photo)}')"` : ""}></span>
+          <span class="hrole">${esc(m.role)}</span><span class="hname">${esc(m.name || "Por confirmar")}</span>
+        </button><span class="sr-only" id="hduty-${k}">${esc(m.duty || "")}${m.sub ? " · " + esc(m.sub) : ""}</span></li>`).join("");
+    const cRole = $(".hc-role", hepta), cDuty = $(".hc-duty", hepta), def = [cRole.textContent, cDuty.textContent];
+    const show = k => {
+      hepta.classList.toggle("focus", k != null);
+      $$(".hnode", hepta).forEach(el => el.classList.toggle("on", +el.dataset.k === k));
+      $$(".h-spoke", hepta).forEach(el => el.classList.toggle("on", +el.dataset.k === k));
+      const m = crew[k]; cRole.textContent = m ? m.role : def[0]; cDuty.textContent = m ? (m.duty || "") + (m.sub ? " · " + m.sub : "") : def[1];
+    };
+    $$(".hnode", hepta).forEach(el => { const k = +el.dataset.k, b = $(".hbtn", el);
+      b.addEventListener("pointerenter", () => show(k)); b.addEventListener("focus", () => show(k)); b.addEventListener("click", () => show(k));
+      b.addEventListener("pointerleave", () => show(null)); b.addEventListener("blur", () => show(null)); });
   }
   /* missions: the list is rebuilt from CONFIG.missions (the HTML slots are the no-JS fallback) */
   const host = $("#missions"), firstOpen = $(".mission.open", host);
@@ -1144,6 +1265,8 @@ const COLLAB = (() => {
     $("#cd-kicker").textContent = outer ? "Ficha de colaboración · club aliado" : "Ficha de colaboración · área de Andromeda";
     $("#cd-code").textContent = id; $("#cd-title").textContent = d.name; $("#cd-line").textContent = d.line;
     $("#cd-together").textContent = d.together;
+    $("#cd-image").innerHTML = d.image ? `<img src="${esc(d.image)}" alt="" loading="lazy">` : `<span class="mono">Foto del proyecto en conjunto · por agregar</span>`;
+    $("#cd-image").classList.toggle("has", !!d.image);
     $("#cd-orbit").textContent = outer ? "Órbita exterior · club aliado" : "Órbita interior · área de Andromeda";
     $("#cd-missions").innerHTML = (d.missions || []).map(m => `<li><span>${esc(m)}</span><span class="mono">Por definir</span></li>`).join("");
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
@@ -1415,7 +1538,9 @@ function initUniverse(){
 
   /* ---- quality tier ---- */
   const cores = navigator.hardwareConcurrency || 4, mem = navigator.deviceMemory || 8;
-  let tier = (MOBILE || cores <= 4 || mem <= 4) ? 0 : (innerWidth >= 1280 && cores >= 8 ? 2 : 1);
+  /* phones: iPhones and 6+ core Androids get the full-look tier; the frame watchdog below steps down if a phone struggles */
+  const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  let tier = MOBILE ? ((IOS || (cores >= 6 && mem >= 4)) ? 1 : 0) : ((cores <= 4 || mem <= 4) ? 0 : (innerWidth >= 1280 && cores >= 8 ? 2 : 1));
   if (typeof window.__TIER === "number") tier = window.__TIER;
   const Q = [
     { stars: 2600, dust: 140, deep: 70,  hero: 22000, gal: 1300, neb: 0,  rocks: 22, seg: 28, pr: 1.5, bloom: 0 },
@@ -1429,7 +1554,7 @@ function initUniverse(){
   try { renderer = new T.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" }); }
   catch(e){ canvas.remove(); introOn = false; endIntro(); return; }
   galaxyStarted = true;
-  let PR = Math.min(Q.pr, devicePixelRatio || 1);
+  let PR = Math.min(MOBILE ? 1.25 : Q.pr, devicePixelRatio || 1);
   renderer.setPixelRatio(PR); renderer.setClearColor(0x070a14, 1);
 
   const scene = new T.Scene(), camera = new T.PerspectiveCamera(46, 1, .1, 2000);
@@ -2185,7 +2310,7 @@ function initUniverse(){
   const sr = rng(Date.now() % 100000);
   let shotNext = performance.now() + 9000 + sr() * 8000, shotT0 = 0, shotFrom = null;
   function updateShot(now){
-    if (RM || tier === 0) return;
+    if (RM) return;
     if (!shot.visible && now > shotNext){
       const left = sr() < .5, band = sr();
       const x = band < .5 ? (left ? W * (.05 + sr() * .1) : W * (.85 + sr() * .1)) : W * (.15 + sr() * .7);
@@ -2247,7 +2372,26 @@ function initUniverse(){
   /* ======================= frame ======================= */
   let tx = 0, ty = 0, ctx = 0, cty = 0;
   if (FINE && !RM) addEventListener("pointermove", e => { tx = e.clientX / innerWidth * 2 - 1; ty = e.clientY / innerHeight * 2 - 1; }, { passive: true });
-  if (!RM) addEventListener("deviceorientation", e => { if (e.gamma == null) return; tx = clamp(e.gamma / 35, -1, 1) * .6; ty = clamp((e.beta - 45) / 45, -1, 1) * .6; }, { passive: true });
+  /* phones: gyroscope (relative to how the phone is held), the finger while touching, and a slow idle drift */
+  let gx = 0, gy = 0, gyro = false, g0 = null, fx = 0, fAmt = 0, touching = false;
+  if (!FINE && !RM){
+    addEventListener("deviceorientation", e => {
+      if (e.gamma == null || e.beta == null) return; gyro = true;
+      if (!g0) g0 = [e.gamma, e.beta];
+      g0[0] += (e.gamma - g0[0]) * .006; g0[1] += (e.beta - g0[1]) * .006;
+      gx = clamp((e.gamma - g0[0]) / 20, -1, 1); gy = clamp((e.beta - g0[1]) / 20, -1, 1);
+    }, { passive: true });
+    const askMotion = e => {                       /* iPhone only shares tilt after asking, from a tap */
+      if (e.target.closest && e.target.closest("a")) return;
+      removeEventListener("touchend", askMotion);
+      const D = window.DeviceOrientationEvent;
+      if (D && typeof D.requestPermission === "function") D.requestPermission().catch(() => {});
+    };
+    addEventListener("touchend", askMotion, { passive: true });
+    addEventListener("touchstart", e => { touching = true; fx = e.touches[0].clientX / innerWidth * 2 - 1; }, { passive: true });
+    addEventListener("touchmove", e => { fx = e.touches[0].clientX / innerWidth * 2 - 1; }, { passive: true });
+    addEventListener("touchend", () => { touching = false; }, { passive: true });
+  }
 
   let intro = introOn ? 0 : 1, skipping = false, textShown = !introOn;
   skip.addEventListener("click", () => { skipping = true; });
@@ -2287,6 +2431,12 @@ function initUniverse(){
     const uT = uFromScroll(SY);
     if (RM) uCur = Math.round(uT); else uCur += (uT - uCur) * (1 - Math.exp(-dt * 2.6));
     uNow = uCur; pose(uCur);
+    if (!FINE && !RM){
+      fAmt += ((touching ? 1 : 0) - fAmt) * (1 - Math.exp(-dt * 3));
+      const ix = Math.sin(time * .21) * .34 + Math.sin(time * .083 + 2) * .18, iy = Math.sin(time * .16 + 1) * .24;
+      tx = gyro ? gx * .85 + ix * .3 : ix; ty = gyro ? gy * .65 + iy * .3 : iy;
+      tx = tx * (1 - fAmt * .6) + fx * .6 * fAmt;
+    }
     ctx += (tx - ctx) * (1 - Math.exp(-dt * 2.2)); cty += (ty - cty) * (1 - Math.exp(-dt * 2.2));
     camera.translateX(ctx * .45); camera.translateY(-cty * .25);
     camera.rotateY(-ctx * .045); camera.rotateX(-cty * .03);
@@ -2461,6 +2611,9 @@ function initUniverse(){
     $("#md-num").textContent = d.num; $("#md-title").textContent = d.title; $("#md-desc").textContent = d.desc;
     $("#md-type").textContent = d.type;
     { const ln = d.el.dataset.link; $("#md-link").innerHTML = ln ? `<a href="${esc(ln)}" target="_blank" rel="noopener" style="color:var(--cyan)">Abrir proyecto ↗</a>` : "Enlace · por publicar"; } $("#md-status").innerHTML = `<span class="mono" style="display:inline-flex;align-items:center;gap:8px;color:var(--ink)">${statusHTML(d.status)}</span>`;
+    { const cm = (CONFIG.missions || []).find(m => m.num === d.num) || {}, imgs = [cm.image, ...(cm.gallery || [])].filter(Boolean);
+      $("#md-shots").innerHTML = imgs.length ? imgs.map(src => `<div class="has"><img src="${esc(src)}" alt="" loading="lazy"></div>`).join("")
+        : ["Portada", "Captura 01", "Captura 02"].map(t => `<div><span class="mono">${t} · por agregar</span></div>`).join(""); }
     $("#md-team").innerHTML = d.team.length ? d.team.map(c => `<span class="chip">${c} · ${NAMES[c] || c}</span>`).join("") : `<span class="mono">Por definir</span>`;
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
     lenis && lenis.stop();
@@ -2476,7 +2629,8 @@ function initUniverse(){
   const n = data.length, cards = data.map((d, i) => {
     const b = document.createElement("button"); b.type = "button"; b.className = "ocard";
     b.setAttribute("aria-label", `Misión ${d.num}, ${d.type}, ${(STATUS[d.status] || STATUS.pendiente)[1]}. Abrir ficha`);
-    b.innerHTML = `<div class="othumb"><span>${d.num}</span></div><div class="obody"><div class="orow"><span class="mono"><b>Misión ${d.num}</b> · ${d.type}</span><span class="mono">${statusHTML(d.status)}</span></div><div class="otitle">${d.title}</div></div>`;
+    const cover = ((CONFIG.missions || []).find(m => m.num === d.num) || {}).image;
+    b.innerHTML = `<div class="othumb">${cover ? `<img src="${esc(cover)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : ""}<span>${d.num}</span></div><div class="obody"><div class="orow"><span class="mono"><b>Misión ${d.num}</b> · ${d.type}</span><span class="mono">${statusHTML(d.status)}</span></div><div class="otitle">${d.title}</div></div>`;
     ring.appendChild(b); return b;
   });
   const ell = $(".orbit-ellipse", stage), core = $(".orbit-core", stage);
@@ -2543,14 +2697,14 @@ function initUniverse(){
 
   /* view toggle */
   const btns = $$(".view-toggle button");
-  const setView = v => {
+  const setView = (v, save) => {
     wrap.classList.toggle("view-orbit", v === "orbit");
     btns.forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
-    store.set("andromeda.view", v);
+    if (save) store.set("andromeda.view2", v);
     if (v === "orbit"){ fit(); run(); }
   };
-  btns.forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
-  setView(store.get("andromeda.view") || (!RM && innerWidth >= 700 ? "orbit" : "list"));
+  btns.forEach(b => b.addEventListener("click", () => setView(b.dataset.view, true)));
+  setView(store.get("andromeda.view2") || (RM ? "list" : "orbit"));
 })();
 
 /* ---------- 04 flight path ---------- */
@@ -2594,7 +2748,7 @@ function initUniverse(){
       endEls.forEach(e => e.classList.toggle("lit", p >= .995));
     };
     set(0);
-    ScrollTrigger.create({ trigger: $(".flight-pin", sec), start: "top top", end: "+=170%", pin: true, scrub: 1.2, onUpdate: s => set(s.progress) });
+    ScrollTrigger.create({ trigger: $(".flight-stage", sec), start: "top 82%", end: "bottom 45%", scrub: 1, onUpdate: s => set(s.progress) });
     document.fonts && document.fonts.ready.then(() => ScrollTrigger.refresh());
   }
 })();

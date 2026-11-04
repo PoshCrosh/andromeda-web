@@ -1,0 +1,6 @@
+deploy.bat
+deploy.command
+README.md
+.git
+.env*
+.gitignore
