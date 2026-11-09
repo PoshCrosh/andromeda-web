@@ -2381,67 +2381,50 @@ function initUniverse(){
     }
   }
 
-  /* ======================= SPACE: occasional 3D visitors and phenomena, placed in the world in front of the camera ======================= */
+  /* ======================= SPACE: permanent 3D phenomena planted along the journey, plus passing rockets and shooting stars ======================= */
   const SPACE = (() => {
-    const sr = rng((Date.now() >> 5) % 100000);
+    const sr = rng((Date.now() >> 5) % 100000);                              /* only for things that pass by */
     const VSB = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
     const ADD = { transparent: true, depthWrite: false, blending: T.AdditiveBlending };
-    const A = new T.Vector3(), B = new T.Vector3(), C = new T.Vector3();
+    const A = new T.Vector3(), B = new T.Vector3();
     const tanV = () => Math.tan(camera.fov * Math.PI / 360);
-    /* a world point in front of the camera: nx, ny in [-1, 1] across the screen, d units deep */
     const ahead = (nx, ny, d) => new T.Vector3(nx * tanV() * camera.aspect * d, ny * tanV() * d, -d).applyQuaternion(camera.quaternion).add(camera.position);
     const camDir = (x, y, z) => new T.Vector3(x, y, z).applyQuaternion(camera.quaternion).normalize();
-    const depthOf = P => A.copy(P).sub(camera.position).dot(B.set(0, 0, -1).applyQuaternion(camera.quaternion));
-    const screenOf = (P, rad) => { const d = depthOf(P); C.copy(P).project(camera);
-      return { x: (C.x * .5 + .5) * W, y: (1 - (C.y * .5 + .5)) * H, r: rad * H / (2 * tanV() * Math.max(.1, d)), front: d > .5 }; };
-    /* keep stationary visitors out from behind text and interactive pieces */
-    const BUSY = "p, h1, h2, h3, li, a, button, .sec-head, .legend, dd, dt, figure, table, img:not(#sky-img), .tags, .mission, .hepta, .field, .orbit-stage, .csys, .ocard, .compare, .gallery, .bar";
-    /* geometry, not hit-testing: some text ignores the pointer, and the shading behind text blocks dims anything under it */
-    let BL = [], WR = [], blAt = -1e9;
-    const crowded = s => {
-      const now = performance.now();
-      if (now - blAt > 3000){ BL = [...document.querySelectorAll(BUSY)]; WR = [...document.querySelectorAll(".sec > .wrap, footer > .wrap")]; blAt = now; }
-      const r = s.r;
-      if (s.x + r < 0 || s.x - r > W || s.y + r < 0 || s.y - r > H) return false;
-      for (const el of BL){
-        const b = el.getBoundingClientRect();
-        if (b.width < 1 || b.bottom < s.y - r || b.top > s.y + r || b.right < s.x - r || b.left > s.x + r) continue;
-        const cx = clamp(s.x, b.left, b.right), cy = clamp(s.y, b.top, b.bottom);
-        if ((cx - s.x) ** 2 + (cy - s.y) ** 2 < r * r) return true;
-      }
-      for (const el of WR){                         /* the dark ellipse each text block sits on (see .sec > .wrap::before) */
-        const b = el.getBoundingClientRect(); if (b.bottom < 0 || b.top > H) continue;
-        const w = b.width * 1.12, h = b.height * 1.12, ex = b.left - b.width * .06 + w * .36, ey = b.top - b.height * .06 + h * .46;
-        const rx = w * .6 * .6 + r, ry = h * .62 * .6 + r;
-        if (((s.x - ex) / rx) ** 2 + ((s.y - ey) / ry) ** 2 < 1) return true;
-      }
-      return false;
-    };
-    const margin = () => { const left = sr() < .35; return { nx: left ? -.97 + sr() * .25 : .5 + sr() * .45, ny: -.75 + sr() * 1.5 }; };
+    /* the camera's pose at any point u of the journey (same maths as pose()), so things can be planted where it will look */
+    const poseP = new T.Vector3(), poseQ = new T.Quaternion();
+    function poseAt(u){ const n = stops.length - 1, uc = clamp(u, 0, n); poseP.copy(posCurve.getPoint(uc / n));
+      const i = Math.min(n - 1, Math.floor(uc)), f = uc - i; poseQ.copy(quats[i]).slerp(quats[i + 1], f); }
+    const spot = (u, nx, ny, d) => { poseAt(u); return new T.Vector3(nx * tanV() * camera.aspect * d, ny * tanV() * d, -d).applyQuaternion(poseQ).add(poseP); };
+    const dirAt = (u, x, y, z) => { poseAt(u); return new T.Vector3(x, y, z).applyQuaternion(poseQ).normalize(); };
 
     const sprite = (frag, uniforms, opts) => {
       const m = new T.Mesh(new T.PlaneGeometry(1, 1), new T.ShaderMaterial(Object.assign({ vertexShader: VSB, fragmentShader: frag,
-        uniforms: Object.assign({ uA: { value: 0 }, uT: { value: 0 } }, uniforms || {}) }, ADD, opts || {})));
-      m.visible = false; m.frustumCulled = false; scene.add(m); return m;
+        uniforms: Object.assign({ uA: { value: 1 }, uT: { value: 0 } }, uniforms || {}) }, ADD, opts || {})));
+      scene.add(m); return m;
     };
     const face = (m, roll) => { m.quaternion.copy(camera.quaternion); if (roll) m.rotateZ(roll); };
+    /* like real objects: invisible from far away, brightening as the camera approaches (they never pop in or out) */
+    const seen = (P, d, u) => { const x = camera.position.distanceTo(P), a = d * 1.3, b = d * 2.1;
+      const near = x <= a ? 1 : x >= b ? 0 : 1 - (x - a) / (b - a);
+      return near * clamp((u + 1.9 - uNow) / .6, 0, 1); };               /* and once we are well past them, they stay behind */
     /* a camera-facing ribbon laid along points P[i] with half-widths w[i] (uv.x runs 0 -> 1 from first to last point) */
     function ribbon(N, frag, uniforms){
       const pos = new Float32Array(N * 6), uv = new Float32Array(N * 4), idx = [];
       for (let i = 0; i < N; i++){ uv.set([i / (N - 1), 0, i / (N - 1), 1], i * 4); if (i < N - 1){ const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } }
       const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3)); g.setAttribute("uv", new T.BufferAttribute(uv, 2)); g.setIndex(idx);
       const m = new T.Mesh(g, new T.ShaderMaterial(Object.assign({ vertexShader: VSB, fragmentShader: frag, side: T.DoubleSide,
-        uniforms: Object.assign({ uA: { value: 0 }, uT: { value: 0 } }, uniforms || {}) }, ADD)));
-      m.visible = false; m.frustumCulled = false; scene.add(m);
-      m.userData.lay = (P, w) => {
+        uniforms: Object.assign({ uA: { value: 1 }, uT: { value: 0 } }, uniforms || {}) }, ADD)));
+      m.frustumCulled = false; scene.add(m);
+      m.userData.lay = (P, w, from) => {                                      /* faces the given viewpoint (the camera by default) */
+        const eye = from || camera.position;
         for (let i = 0; i < N; i++){
           A.copy(P[Math.min(N - 1, i + 1)]).sub(P[Math.max(0, i - 1)]).normalize();
-          B.copy(camera.position).sub(P[i]).normalize();
+          B.copy(eye).sub(P[i]).normalize();
           A.cross(B).normalize().multiplyScalar(w[i]);
           pos[i * 6] = P[i].x + A.x; pos[i * 6 + 1] = P[i].y + A.y; pos[i * 6 + 2] = P[i].z + A.z;
           pos[i * 6 + 3] = P[i].x - A.x; pos[i * 6 + 4] = P[i].y - A.y; pos[i * 6 + 5] = P[i].z - A.z;
         }
-        g.attributes.position.needsUpdate = true;
+        g.attributes.position.needsUpdate = true; g.computeBoundingSphere();
       };
       return m;
     }
@@ -2449,18 +2432,159 @@ function initUniverse(){
       void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p);
         float c = exp(-r * r * 40.0) * 1.6 + exp(-r * 5.0) * .35 + (exp(-abs(p.x) * 60.0) + exp(-abs(p.y) * 60.0)) * exp(-r * 3.0) * .35;
         gl_FragColor = vec4(mix(uCol, vec3(1.), exp(-r * r * 80.0)) * c, uA * smoothstep(1.0, .8, r)); }`;
-    const fadeOf = (t, inn, out) => Math.max(0, Math.min(1, t / inn, (1 - t) / out));
 
-    /* ---------- shooting stars: a streak flying through space, its own stream ---------- */
+    /* ---------- black holes: solid horizon (hides what is behind it), tilted accretion disc, photon ring ---------- */
+    const BH_SPH = new T.SphereGeometry(1, 40, 24), BH_RING = new T.RingGeometry(1.45, 4.8, 180, 1);
+    const BH_DISC = new T.ShaderMaterial(Object.assign({ side: T.DoubleSide, uniforms: { uA: { value: 1 }, uT: { value: 0 } },
+      vertexShader: `varying vec3 vTan, vW; varying vec2 vP; void main(){ vP = position.xy; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+        vTan = normalize((modelMatrix * vec4(-position.y, position.x, 0.0, 0.0)).xyz); gl_Position = projectionMatrix * viewMatrix * w; }`,
+      fragmentShader: `uniform float uA, uT; varying vec3 vTan, vW; varying vec2 vP;
+        void main(){
+          float r = length(vP), a = atan(vP.y, vP.x), t = clamp((r - 1.45) / 3.35, 0.0, 1.0);
+          float band = smoothstep(0.0, .06, t) * pow(1.0 - t, 1.7);
+          float sp = a * 2.0 - uT * 1.2 + 7.0 * log(r); float swirl = .72 + .2 * sin(sp * 3.0) + .08 * sin(sp * 7.0 + r * 4.0);
+          float dop = clamp(1.0 + .85 * dot(vTan, normalize(cameraPosition - vW)), .15, 2.2);
+          vec3 hot = mix(vec3(1., .97, .9), vec3(1., .42, .14), pow(t, .7));
+          gl_FragColor = vec4(hot * band * swirl * dop * 1.7, uA);
+        }` }, ADD));
+    const BH_HALO = `uniform float uA; varying vec2 vUv;
+      void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p);
+        float ring = exp(-pow((r - .27) / .016, 2.0));
+        float arc = exp(-pow((r - .36) / .055, 2.0)) * smoothstep(-.02, .22, p.y) * .6;
+        float under = exp(-pow((r - .31) / .03, 2.0)) * smoothstep(.02, -.18, p.y) * .3;
+        float glow = exp(-r * 5.5) * .18;
+        gl_FragColor = vec4(vec3(1., .86, .68) * (ring + arc + under) + vec3(.6, .55, 1.) * glow, uA); }`;
+    function blackHole(u, nx, ny, d, r, tilt, roll){
+      const g = new T.Group(), core = new T.Mesh(BH_SPH, new T.MeshBasicMaterial({ color: 0x000000, transparent: true, depthWrite: true })), disc = new T.Mesh(BH_RING, BH_DISC.clone());
+      core.renderOrder = 5;
+      disc.renderOrder = 6; g.add(core, disc); scene.add(g);
+      const halo = sprite(BH_HALO); halo.renderOrder = 7;
+      return {
+        place(){ const P = spot(u, nx, ny, d); g.position.copy(P); g.scale.setScalar(r); g.quaternion.copy(poseQ); g.rotateZ(roll); g.rotateX(-(Math.PI / 2 - tilt));
+          halo.position.copy(P); halo.scale.setScalar(r * 8.3); },
+        tick(time){ const k = seen(g.position, d, u); g.visible = halo.visible = k > 0; if (!k) return;
+          core.material.opacity = k; disc.material.uniforms.uA.value = k; disc.material.uniforms.uT.value = time; halo.material.uniforms.uA.value = k; face(halo, roll); }
+      };
+    }
+
+    /* ---------- galaxies: point cloud + a glowing disc in the galaxy's own plane (round glow for ellipticals/irregulars) ---------- */
+    const GV = [
+      galaxy({ type: "spiral", n: Q.gal, R: 2.6, seed: 901, wind: 5, spin: .02, tint: VIO, bright: 2.6, psize: 2.4 }),
+      galaxy({ type: "barred", n: Q.gal, R: 2.4, seed: 902, wind: 4, spin: .02, tint: CYA, bright: 2.6, psize: 2.4 }),
+      galaxy({ type: "elliptical", n: Math.round(Q.gal * .7), R: 2.0, q: .55, seed: 903, spin: 0, bright: 3.0, psize: 2.4 }),
+      galaxy({ type: "irregular", n: Math.round(Q.gal * .7), R: 1.8, seed: 904, spin: .008, bright: 2.4, psize: 2.2 })
+    ];
+    GV.forEach(g => scene.add(g));
+    const GAL_GLOW = `uniform float uA, uT, uArms; uniform vec3 uCol; varying vec2 vUv;
+      void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p); if (r > 1.0) discard;
+        float a = atan(p.y, p.x) + uT, arms = .5 + .5 * cos(uArms * (a - 2.4 * log(r + .06)));
+        float disc = exp(-r * 3.2), core = exp(-r * r * 55.0);
+        vec3 c = uCol * disc * (.22 + .95 * pow(arms, 3.0)) + vec3(1., .93, .82) * core * 1.4;
+        gl_FragColor = vec4(c, uA * smoothstep(1.0, .45, r) * .9); }`;
+    const GLOW_TINT = [[2, [.62, .55, 1.]], [2, [.45, .85, .95]], [0, [1., .82, .62]], [0, [.6, .72, 1.]]];
+    function galaxyAt(gi, u, nx, ny, d, s, rx, ry, rz, spin){
+      const g = GV[gi], flat = gi < 2, [arms, c] = GLOW_TINT[gi];
+      const glow = sprite(GAL_GLOW, { uArms: { value: arms }, uCol: { value: new T.Color(c[0], c[1], c[2]) } }, { side: T.DoubleSide });
+      return {
+        place(){ const P = spot(u, nx, ny, d); g.position.copy(P); g.scale.setScalar(s); g.quaternion.copy(poseQ); g.rotateX(rx); g.rotateY(ry); g.rotateZ(rz);
+          glow.position.copy(P); glow.scale.setScalar(2.6 * s * (flat ? 2.3 : 1.7)); if (flat){ glow.quaternion.copy(g.quaternion); glow.rotateX(-Math.PI / 2); } },
+        tick(time){ const k = seen(g.position, d, u); g.visible = glow.visible = k > 0; if (!k) return;
+          g.material.uniforms.uOpacity.value = k; glow.material.uniforms.uA.value = k * (flat ? .8 : .45);
+          g.material.uniforms.uFocus.value = camera.position.distanceTo(g.position); if (!flat) face(glow); glow.material.uniforms.uT.value = time * spin; }
+      };
+    }
+
+    /* ---------- binary stars: a blue-white and an orange star orbiting their shared centre, forever ---------- */
+    function binary(u, nx, ny, d, sep, period){
+      const a = sprite(STAR_FS, { uCol: { value: new T.Color(.6, .75, 1) } }), b = sprite(STAR_FS, { uCol: { value: new T.Color(1, .62, .32) } });
+      const halo = sprite(`uniform float uA; varying vec2 vUv; void main(){ float r = length(vUv - .5) * 2.0; gl_FragColor = vec4(vec3(.75, .7, 1.) * exp(-r * 4.0) * .3, uA * smoothstep(1.0, .7, r)); }`);
+      let P, U, V;
+      return {
+        place(){ P = spot(u, nx, ny, d); U = dirAt(u, 1, .15, .3); V = new T.Vector3().crossVectors(dirAt(u, 0, 1, .45), U).normalize();
+          halo.position.copy(P); halo.scale.setScalar(sep * 3.2); a.scale.setScalar(sep * .95); b.scale.setScalar(sep * .7); },
+        tick(time){ const k = seen(P, d, u); a.visible = b.visible = halo.visible = k > 0; if (!k) return;
+          a.material.uniforms.uA.value = b.material.uniforms.uA.value = halo.material.uniforms.uA.value = k;
+          const w = time * 6.283 / period, ca = Math.cos(w), sa = Math.sin(w), rA = sep * .38, rB = sep * .62;
+          a.position.copy(P).addScaledVector(U, ca * rA).addScaledVector(V, sa * rA);
+          b.position.copy(P).addScaledVector(U, -ca * rB).addScaledVector(V, -sa * rB);
+          face(a); face(b); face(halo); }
+      };
+    }
+
+    /* ---------- supernova remnant: the expanding shell a supernova leaves behind, with its neutron star ---------- */
+    const NOVA_FS = `uniform float uA, uK, uT; varying vec2 vUv;
+      float h(float x){ return fract(sin(x * 91.7) * 43758.5); }
+      void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p), a = atan(p.y, p.x) + uT * .02;
+        float R = .06 + .78 * pow(uK, .55);
+        float fil = .5 + .5 * sin(a * 13.0 + h(floor(a * 5.0 + 9.0)) * 6.0) * sin(a * 7.0 - uK * 3.0 + uT * .05);
+        float shell = exp(-pow((r - R) / (.025 + .07 * uK), 2.0)) * (.35 + .65 * fil) * 1.1;
+        float rem = exp(-pow(r / max(R * .85, .01), 2.0)) * .32;
+        vec3 c = mix(vec3(.5, .85, 1.), vec3(.95, .45, .6), uK) * shell + vec3(.9, .4, .5) * rem;
+        gl_FragColor = vec4(c, uA * smoothstep(1.0, .9, r)); }`;
+    function remnant(u, nx, ny, d, S){
+      const shell = sprite(NOVA_FS, { uK: { value: .5 } }), star = sprite(STAR_FS, { uCol: { value: new T.Color(.65, .85, 1) } });
+      return {
+        place(){ const P = spot(u, nx, ny, d); shell.position.copy(P); shell.scale.setScalar(S); star.position.copy(P); star.scale.setScalar(S * .09); },
+        tick(time){ const k = seen(shell.position, d, u); shell.visible = star.visible = k > 0; if (!k) return;
+          face(shell); face(star); shell.material.uniforms.uT.value = time; shell.material.uniforms.uA.value = k; star.material.uniforms.uA.value = k * (.75 + .25 * Math.sin(time * 9.0)); }   /* the neutron star flickers */
+      };
+    }
+
+    /* ---------- comets: nucleus + coma, a curved dust tail and a straight blue ion tail ---------- */
+    const NC = 18;
+    const DUST_FS = `uniform float uA, uT; varying vec2 vUv;
+      void main(){ float w = 1.0 - abs(vUv.y - .5) * 2.0; float streak = .75 + .25 * sin(vUv.y * 26.0 + vUv.x * 3.0 - uT * .6);
+        gl_FragColor = vec4(mix(vec3(.95, .82, .62), vec3(1., .97, .9), vUv.x), pow(vUv.x, 1.6) * pow(w, 1.3) * streak * uA * .8); }`;
+    const ION_FS = `uniform float uA, uT; varying vec2 vUv;
+      void main(){ float w = 1.0 - abs(vUv.y - .5) * 2.0; float streak = .6 + .4 * sin(vUv.y * 40.0 - uT * 2.0 + vUv.x * 9.0);
+        gl_FragColor = vec4(mix(vec3(.35, .65, 1.), vec3(.8, .9, 1.), vUv.x), pow(vUv.x, 1.1) * pow(w, 2.0) * streak * uA * .75); }`;
+    function comet(u, nx, ny, d, L, side){
+      const dust = ribbon(NC, DUST_FS), ion = ribbon(NC, ION_FS), coma = sprite(STAR_FS, { uCol: { value: new T.Color(.7, .95, .95) } });
+      const CP = Array.from({ length: NC }, () => new T.Vector3()), CW = new Array(NC).fill(0), IP = Array.from({ length: NC }, () => new T.Vector3()), IW = new Array(NC).fill(0);
+      let head, anti, vel, lastEye = new T.Vector3(1e9, 0, 0);
+      const lay = () => {
+        for (let i = 0; i < NC; i++){ const k = 1 - i / (NC - 1);
+          CP[i].copy(head).addScaledVector(anti, L * k).addScaledVector(vel, -L * .45 * k * k); CW[i] = L * (.015 + .16 * k);
+          IP[i].copy(head).addScaledVector(anti, L * 1.25 * k); IW[i] = L * (.01 + .04 * k); }
+        dust.userData.lay(CP, CW); ion.userData.lay(IP, IW); lastEye.copy(camera.position);
+      };
+      return {
+        place(){ head = spot(u, nx, ny, d); anti = dirAt(u, side * .35, .85, -.3); vel = dirAt(u, -side, -.2, 0); coma.position.copy(head); coma.scale.setScalar(L * .55); lastEye.set(1e9, 0, 0); },
+        tick(time){ const k = seen(head, d, u); dust.visible = ion.visible = coma.visible = k > 0; if (!k) return;
+          dust.material.uniforms.uA.value = ion.material.uniforms.uA.value = coma.material.uniforms.uA.value = k;
+          if (lastEye.distanceToSquared(camera.position) > .01) lay();       /* tails stay turned toward the viewer */
+          face(coma); dust.material.uniforms.uT.value = time; ion.material.uniforms.uT.value = time; }
+      };
+    }
+
+    /* ---------- where everything lives: u = point of the journey (0 hero ... 7 footer), nx/ny = where on screen it sits from there ---------- */
+    const ITEMS = [
+      galaxyAt(0, .55, .74, .42, 34, 1.6, .7, .4, .2, .03),
+      blackHole(1.25, .7, -.22, 30, 1.1, .2, .3),
+      binary(1.8, -.84, .48, 30, 1.8, 7),
+      comet(2.35, .62, .5, 34, 4.2, -1),
+      galaxyAt(2, 2.85, -.82, -.35, 40, 1.8, .5, 1.2, -.3, 0),
+      remnant(3.45, .72, .34, 55, 13),
+      blackHole(4.2, .68, .14, 58, 1.7, .14, -.2),
+      galaxyAt(1, 4.75, .74, -.42, 38, 1.5, .9, 2.4, .4, -.03),
+      binary(5.25, .78, .45, 32, 2.2, 9),
+      comet(5.75, -.72, .58, 36, 4.6, 1),
+      galaxyAt(3, 6.65, -.8, .38, 34, 1.4, .3, 1.7, .2, .02)
+    ];
+    let placedFor = null, placedAspect = 0;
+    const placeAll = () => { ITEMS.forEach(it => it.place()); placedFor = stops; placedAspect = camera.aspect; };
+
+    /* ---------- shooting stars: a streak through space every few seconds ---------- */
     const NS = 12, SP = Array.from({ length: NS }, () => new T.Vector3()), SW = new Array(NS).fill(0);
     const shot = ribbon(NS, `uniform float uA; varying vec2 vUv;
       void main(){ float w = 1.0 - abs(vUv.y - .5) * 2.0; gl_FragColor = vec4(mix(vec3(.7, .76, 1.), vec3(1.), vUv.x), pow(vUv.x, 2.2) * pow(w, 1.5) * uA); }`);
     const shotHead = sprite(STAR_FS, { uCol: { value: new T.Color(.85, .9, 1) } });
+    shot.visible = shotHead.visible = false; shotHead.frustumCulled = false;
     let sh = null, shNext = performance.now() + 3500 + sr() * 3000;
     function stepShot(now){
       if (!sh && now > shNext){
-        const m = margin(), d = 16 + sr() * 30, p0 = ahead(m.nx, Math.abs(m.ny) * .9, d);
-        const dir = camDir((m.nx < 0 ? 1 : -1) * (.7 + sr() * .25), -(.3 + sr() * .4), (sr() - .5) * .9);
+        const left = sr() < .5, d = 16 + sr() * 30, p0 = ahead(left ? -.9 + sr() * .45 : .45 + sr() * .45, .1 + sr() * .75, d);
+        const dir = camDir((left ? 1 : -1) * (.7 + sr() * .25), -(.3 + sr() * .4), (sr() - .5) * .9);
         sh = { t0: now, life: 650 + sr() * 450, p0, dir, len: d * (.1 + sr() * .07), travel: d * (.5 + sr() * .35), w: d * .0018 };
       }
       if (!sh){ shot.visible = shotHead.visible = false; return; }
@@ -2473,44 +2597,15 @@ function initUniverse(){
       shotHead.material.uniforms.uA.value = Math.sin(Math.PI * t);
     }
 
-    /* ---------- black hole: an opaque horizon, a tilted accretion disc (Doppler-bright on the approaching side), a photon ring ---------- */
-    const bh = new T.Group(); bh.visible = false; scene.add(bh);
-    const bhCore = new T.Mesh(new T.SphereGeometry(1, 40, 24), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 1, depthWrite: true }));
-    bhCore.renderOrder = 5;
-    const bhDisc = new T.Mesh(new T.RingGeometry(1.45, 4.8, 180, 1), new T.ShaderMaterial(Object.assign({ side: T.DoubleSide,
-      uniforms: { uA: { value: 0 }, uT: { value: 0 } },
-      vertexShader: `varying vec3 vTan, vW; varying vec2 vP; void main(){ vP = position.xy; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
-        vTan = normalize((modelMatrix * vec4(-position.y, position.x, 0.0, 0.0)).xyz); gl_Position = projectionMatrix * viewMatrix * w; }`,
-      fragmentShader: `uniform float uA, uT; varying vec3 vTan, vW; varying vec2 vP;
-        void main(){
-          float r = length(vP), a = atan(vP.y, vP.x), t = clamp((r - 1.45) / 3.35, 0.0, 1.0);
-          float band = smoothstep(0.0, .06, t) * pow(1.0 - t, 1.7);
-          float sp = a * 2.0 - uT * 1.2 + 7.0 * log(r); float swirl = .72 + .2 * sin(sp * 3.0) + .08 * sin(sp * 7.0 + r * 4.0);
-          float dop = clamp(1.0 + .85 * dot(vTan, normalize(cameraPosition - vW)), .15, 2.2);
-          vec3 hot = mix(vec3(1., .97, .9), vec3(1., .42, .14), pow(t, .7));
-          gl_FragColor = vec4(hot * band * swirl * dop * 1.7, uA);
-        }` }, ADD)));
-    bhDisc.renderOrder = 6;
-    bh.add(bhCore, bhDisc);
-    const bhHalo = sprite(`uniform float uA; varying vec2 vUv;
-      void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p);
-        float ring = exp(-pow((r - .27) / .016, 2.0));
-        float arc = exp(-pow((r - .36) / .055, 2.0)) * smoothstep(-.02, .22, p.y) * .6;   /* far side of the disc, bent over the top */
-        float under = exp(-pow((r - .31) / .03, 2.0)) * smoothstep(.02, -.18, p.y) * .3;
-        float glow = exp(-r * 5.5) * .18;
-        gl_FragColor = vec4(vec3(1., .86, .68) * (ring + arc + under) + vec3(.6, .55, 1.) * glow, uA); }`);
-    bhHalo.renderOrder = 7;
-
-    /* ---------- rocket: a tiny ship + a stream of boost particles ---------- */
+    /* ---------- rockets: a tiny ship with a boost plume crosses the view now and then ---------- */
     const rocket = new T.Group(); rocket.visible = false; scene.add(rocket);
-    const RM_INK = new T.MeshBasicMaterial({ color: 0xECE8DF, transparent: true }), RM_VIO = new T.MeshBasicMaterial({ color: 0x8E7CF8, transparent: true }),
-          RM_CY = new T.MeshBasicMaterial({ color: 0x66D6E6, transparent: true }), RM_DK = new T.MeshBasicMaterial({ color: 0x6E7286, transparent: true });
-    { const body = new T.Mesh(new T.CylinderGeometry(.05, .05, .22, 14), RM_INK); body.rotation.x = Math.PI / 2;
-      const nose = new T.Mesh(new T.ConeGeometry(.05, .11, 14), RM_VIO); nose.rotation.x = Math.PI / 2; nose.position.z = .165;
-      const win = new T.Mesh(new T.SphereGeometry(.02, 10, 8), RM_CY); win.position.set(0, .043, .05);
-      const nz = new T.Mesh(new T.CylinderGeometry(.03, .042, .035, 12), RM_DK); nz.rotation.x = Math.PI / 2; nz.position.z = -.125;
+    const RK = [0xECE8DF, 0x8E7CF8, 0x66D6E6, 0x6E7286].map(c => new T.MeshBasicMaterial({ color: c, transparent: true }));
+    { const body = new T.Mesh(new T.CylinderGeometry(.05, .05, .22, 14), RK[0]); body.rotation.x = Math.PI / 2;
+      const nose = new T.Mesh(new T.ConeGeometry(.05, .11, 14), RK[1]); nose.rotation.x = Math.PI / 2; nose.position.z = .165;
+      const win = new T.Mesh(new T.SphereGeometry(.02, 10, 8), RK[2]); win.position.set(0, .043, .05);
+      const nz = new T.Mesh(new T.CylinderGeometry(.03, .042, .035, 12), RK[3]); nz.rotation.x = Math.PI / 2; nz.position.z = -.125;
       rocket.add(body, nose, win, nz);
-      for (let i = 0; i < 3; i++){ const f = new T.Mesh(new T.BoxGeometry(.008, .075, .07), RM_VIO), a = i * 2.0944 + Math.PI / 2;
+      for (let i = 0; i < 3; i++){ const f = new T.Mesh(new T.BoxGeometry(.008, .075, .07), RK[1]), a = i * 2.0944 + Math.PI / 2;
         f.position.set(Math.cos(a) * .07, Math.sin(a) * .07, -.085); f.rotation.z = a - Math.PI / 2; rocket.add(f); } }
     const NB = 90, bPos = new Float32Array(NB * 3), bAge = new Float32Array(NB).fill(1), bVel = new Float32Array(NB * 3);
     const bG = new T.BufferGeometry(); bG.setAttribute("position", new T.BufferAttribute(bPos, 3)); bG.setAttribute("aAge", new T.BufferAttribute(bAge, 1));
@@ -2523,169 +2618,39 @@ function initUniverse(){
           vec3 c = mix(vec3(1., .96, .86), mix(vec3(.64, .54, 1.), vec3(.36, .7, .95), vAge), smoothstep(0.0, .45, vAge));
           gl_FragColor = vec4(c, uA * .55 * pow(1.0 - vAge, 1.5) * exp(-r * r * 3.5)); }` }, ADD)));
     boost.frustumCulled = false; boost.visible = false; scene.add(boost);
-    let bEmit = 0, bNext = 0;
-
-    /* ---------- distant galaxies: real point-cloud galaxies built like the main one ---------- */
-    const GV = [
-      galaxy({ type: "spiral", n: Q.gal, R: 2.6, seed: 901, wind: 5, spin: .02, tint: VIO, bright: 2.6, psize: 2.4 }),
-      galaxy({ type: "barred", n: Q.gal, R: 2.4, seed: 902, wind: 4, spin: .02, tint: CYA, bright: 2.6, psize: 2.4 }),
-      galaxy({ type: "elliptical", n: Math.round(Q.gal * .7), R: 2.0, q: .55, seed: 903, spin: 0, bright: 3.0, psize: 2.4 }),
-      galaxy({ type: "irregular", n: Math.round(Q.gal * .7), R: 1.8, seed: 904, spin: .008, bright: 2.4, psize: 2.2 })
-    ];
-    GV.forEach(g => { g.visible = false; scene.add(g); });
-    const GAL_GLOW = `uniform float uA, uT, uArms; uniform vec3 uCol; varying vec2 vUv;
-      void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p); if (r > 1.0) discard;
-        float a = atan(p.y, p.x) + uT, arms = .5 + .5 * cos(uArms * (a - 2.4 * log(r + .06)));
-        float disc = exp(-r * 3.2), core = exp(-r * r * 55.0);
-        vec3 c = uCol * disc * (.22 + .95 * pow(arms, 3.0)) + vec3(1., .93, .82) * core * 1.4;
-        gl_FragColor = vec4(c, uA * smoothstep(1.0, .45, r) * .9); }`;
-    const GLOWS = [[2, [.62, .55, 1.]], [2, [.45, .85, .95]], [0, [1., .82, .62]], [0, [.6, .72, 1.]]].map(([arms, c]) => {
-      const m = sprite(GAL_GLOW, { uArms: { value: arms }, uCol: { value: new T.Color(c[0], c[1], c[2]) } }, { side: T.DoubleSide }); return m; });
-
-    /* ---------- comet: nucleus + coma, a curved dust tail and a straight blue ion tail ---------- */
-    const NC = 18, CP = Array.from({ length: NC }, () => new T.Vector3()), CW = new Array(NC).fill(0), IP = Array.from({ length: NC }, () => new T.Vector3()), IW = new Array(NC).fill(0);
-    const dustTail = ribbon(NC, `uniform float uA, uT; varying vec2 vUv;
-      void main(){ float w = 1.0 - abs(vUv.y - .5) * 2.0; float streak = .75 + .25 * sin(vUv.y * 26.0 + vUv.x * 3.0 - uT * .6);
-        gl_FragColor = vec4(mix(vec3(.95, .82, .62), vec3(1., .97, .9), vUv.x), pow(vUv.x, 1.6) * pow(w, 1.3) * streak * uA * .8); }`);
-    const ionTail = ribbon(NC, `uniform float uA, uT; varying vec2 vUv;
-      void main(){ float w = 1.0 - abs(vUv.y - .5) * 2.0; float streak = .6 + .4 * sin(vUv.y * 40.0 - uT * 2.0 + vUv.x * 9.0);
-        gl_FragColor = vec4(mix(vec3(.35, .65, 1.), vec3(.8, .9, 1.), vUv.x), pow(vUv.x, 1.1) * pow(w, 2.0) * streak * uA * .75); }`);
-    const coma = sprite(STAR_FS, { uCol: { value: new T.Color(.7, .95, .95) } });
-
-    /* ---------- supernova: a flash with diffraction spikes, an expanding filamented shell, a fading remnant ---------- */
-    const nova = sprite(`uniform float uA, uK; varying vec2 vUv;
-      float h(float x){ return fract(sin(x * 91.7) * 43758.5); }
-      void main(){ vec2 p = (vUv - .5) * 2.0; float r = length(p), a = atan(p.y, p.x);
-        float flash = exp(-uK * 7.0);
-        float core = exp(-r * r * (70.0 - 50.0 * flash)) * (.5 + 2.6 * flash);
-        float spikes = (exp(-abs(p.x) * 110.0) + exp(-abs(p.y) * 110.0)) * exp(-r * 2.2) * flash * 1.5;
-        float R = .06 + .78 * pow(uK, .55);
-        float fil = .5 + .5 * sin(a * 13.0 + h(floor(a * 5.0 + 9.0)) * 6.0) * sin(a * 7.0 - uK * 3.0);
-        float shell = exp(-pow((r - R) / (.025 + .07 * uK), 2.0)) * (.35 + .65 * fil) * (1.0 - uK) * 1.4;
-        float rem = exp(-pow(r / max(R * .85, .01), 2.0)) * .3 * smoothstep(.08, .45, uK) * (1.0 - uK);
-        vec3 c = vec3(1., .97, .92) * core + vec3(.85, .9, 1.) * spikes + mix(vec3(.5, .85, 1.), vec3(.95, .45, .6), uK) * shell + vec3(.9, .4, .5) * rem;
-        gl_FragColor = vec4(c, uA * smoothstep(1.0, .9, r)); }`, { uK: { value: 0 } });
-
-    /* ---------- binary stars: a blue-white and an orange star orbiting their shared centre ---------- */
-    const starA = sprite(STAR_FS, { uCol: { value: new T.Color(.6, .75, 1) } });
-    const starB = sprite(STAR_FS, { uCol: { value: new T.Color(1, .62, .32) } });
-    const binGlow = sprite(`uniform float uA; varying vec2 vUv; void main(){ float r = length(vUv - .5) * 2.0; gl_FragColor = vec4(vec3(.75, .7, 1.) * exp(-r * 4.0) * .3, uA * smoothstep(1.0, .7, r)); }`);
-
-    /* ---------- events: one at a time, every ~9-16 s ---------- */
-    const KINDS = [["bh", 1.3], ["rocket", 1.2], ["gal", 1], ["comet", .9], ["nova", .8], ["binary", .8]];
-    let ev = null, evNext = performance.now() + 5000 + sr() * 4000, lastKind = "";
-    const pickKind = () => { const opts = KINDS.filter(k => k[0] !== lastKind), tot = opts.reduce((s, k) => s + k[1], 0); let x = sr() * tot;
-      for (const k of opts){ if ((x -= k[1]) <= 0) return k[0]; } return opts[0][0]; };
-    function place(rad, dMin, dMax){                     /* a clear margin spot at depth; null if none */
-      for (let i = 0; i < 10; i++){ const m = margin(), d = dMin + sr() * (dMax - dMin), P = ahead(m.nx, m.ny, d), s = screenOf(P, rad);
-        if (!crowded(s)) return P; }
-      return null;
+    let rk = null, rkNext = performance.now() + 9000 + sr() * 8000, bEmit = 0, bNext = 0;
+    function stepRocket(dt, now, time){
+      if (!rk){
+        if (now < rkNext || document.hidden){ rocket.visible = boost.visible = false; return; }
+        const from = sr() < .5 ? -1 : 1, d = 11 + sr() * 9, y0 = -.6 + sr() * 1.2;
+        rk = { t0: now, life: 6000 + sr() * 3000, a: ahead(from * 1.2, y0, d), b: ahead(-from * 1.2, clamp(y0 + (sr() - .5) * .7, -.85, .85), d), wob: sr() * 6.28, bob: (sr() - .5) * .3 };
+        bAge.fill(1); bEmit = 0;
+        boost.material.uniforms.uPR.value = PR; boost.material.uniforms.uH.value = H; boost.material.uniforms.uTV.value = tanV();
+      }
+      const t = (now - rk.t0) / rk.life;
+      if (t >= 1){ rk = null; rocket.visible = boost.visible = false; rkNext = now + 16000 + sr() * 14000; return; }
+      const f = Math.max(0, Math.min(1, t / .1, (1 - t) / .1));
+      const up = camDir(0, 1, 0), at = e => A.copy(rk.a).lerp(rk.b, e).addScaledVector(up, Math.sin(e * 9.42 + rk.wob) * .25 + rk.bob * Math.sin(e * 3.14));
+      const pos = at(t).clone(), nxt = at(Math.min(1, t + .01)).clone();
+      rocket.visible = boost.visible = true; rocket.position.copy(pos); rocket.lookAt(nxt); rocket.rotateZ(time * 1.6);
+      RK.forEach(m => m.opacity = Math.min(1, f * 1.5));
+      const back = B.copy(pos).sub(nxt).normalize();
+      bEmit += dt * 200;
+      while (bEmit >= 1){ bEmit -= 1; const i = bNext; bNext = (bNext + 1) % NB;
+        bPos[i * 3] = pos.x + back.x * .14; bPos[i * 3 + 1] = pos.y + back.y * .14; bPos[i * 3 + 2] = pos.z + back.z * .14; bAge[i] = 0;
+        bVel[i * 3] = back.x * .9 + (sr() - .5) * .12; bVel[i * 3 + 1] = back.y * .9 + (sr() - .5) * .12; bVel[i * 3 + 2] = back.z * .9 + (sr() - .5) * .12; }
+      for (let i = 0; i < NB; i++){ if (bAge[i] >= 1) continue; bAge[i] = Math.min(1, bAge[i] + dt / .42);
+        bPos[i * 3] += bVel[i * 3] * dt; bPos[i * 3 + 1] += bVel[i * 3 + 1] * dt; bPos[i * 3 + 2] += bVel[i * 3 + 2] * dt; }
+      bG.attributes.position.needsUpdate = true; bG.attributes.aAge.needsUpdate = true;
+      boost.material.uniforms.uA.value = Math.min(1, f * 1.5);
     }
-    function spawn(now, kind){
-      if (kind === "bh"){
-        const r = Math.exp(Math.log(.25) + sr() * (Math.log(2.1) - Math.log(.25)));   /* small to enormous */
-        const P = place(r * 4.8 * .7, 22 + r * 10, 40 + r * 22); if (!P) return null;
-        bh.position.copy(P); bh.scale.setScalar(r);
-        bh.quaternion.copy(camera.quaternion); bh.rotateZ((sr() - .5) * .7); bh.rotateX(-(Math.PI / 2 - (.12 + sr() * .2)));
-        const roll = (sr() - .5) * .7;
-        return { kind, P, rad: r * 4.8 * .6, life: 13000 + sr() * 5000, roll, r, spin: .6 + sr() * .8 };
-      }
-      if (kind === "gal"){
-        const gi = (sr() * GV.length) | 0, g = GV[gi], s = 1 + sr() * 1.4, P = place(2.6 * s * .8, 26 + s * 6, 40 + s * 12); if (!P) return null;
-        g.position.copy(P); g.scale.setScalar(s);
-        g.quaternion.copy(camera.quaternion); g.rotateX(.35 + sr() * .9); g.rotateY(sr() * 6.28); g.rotateZ((sr() - .5) * .8);   /* tilted toward us, never edge-on */
-        const glow = GLOWS[gi], flat = gi < 2;
-        glow.position.copy(P); glow.scale.setScalar(2.6 * s * (flat ? 2.3 : 1.7));
-        if (flat){ glow.quaternion.copy(g.quaternion); glow.rotateX(-Math.PI / 2); }
-        return { kind, P, rad: 2.6 * s * .7, life: 14000 + sr() * 5000, g, glow, flat, spin: (sr() < .5 ? -1 : 1) * .03 };
-      }
-      if (kind === "nova"){
-        const S = 13 + sr() * 14, P = place(S * .4, 50, 105); if (!P) return null;
-        return { kind, P, rad: S * .45, life: 6500 + sr() * 2500, S };
-      }
-      if (kind === "binary"){
-        const sep = 1.2 + sr() * 1.6, P = place(sep * 2.2, 26, 50); if (!P) return null;
-        const u = camDir(1, (sr() - .5) * .4, (sr() - .5) * .8), v = new T.Vector3().crossVectors(camDir(0, 1, .25 + sr() * .5), u).normalize();
-        return { kind, P, rad: sep * 2, life: 14000 + sr() * 4000, sep, u, v, w: 1 + sr() * .7, sizeA: 1.4 + sr() * .8, sizeB: 1 + sr() * .6 };
-      }
-      if (kind === "comet"){
-        const from = sr() < .5 ? -1 : 1, d = 28 + sr() * 25, y0 = .25 + sr() * .55;
-        const a = ahead(from * 1.25, y0, d), b = ahead(-from * 1.25, y0 - (.15 + sr() * .35), d);
-        const anti = camDir(-from * (.2 + sr() * .3), .85, -.35 + sr() * .3);
-        return { kind, a, b, life: 15000 + sr() * 5000, L: d * (.12 + sr() * .08), anti };
-      }
-      /* rocket */
-      const from = sr() < .5 ? -1 : 1, d = 11 + sr() * 9, y0 = -.6 + sr() * 1.2;
-      const a = ahead(from * 1.2, y0, d), b = ahead(-from * 1.2, clamp(y0 + (sr() - .5) * .7, -.85, .85), d);
-      bAge.fill(1); bEmit = 0;
-      boost.material.uniforms.uPR.value = PR; boost.material.uniforms.uH.value = H; boost.material.uniforms.uTV.value = tanV();
-      return { kind: "rocket", a, b, life: 6000 + sr() * 3000, wob: sr() * 6.28, bob: (sr() - .5) * .3 };
-    }
-    const hideAll = () => { bh.visible = bhHalo.visible = rocket.visible = boost.visible = dustTail.visible = ionTail.visible = coma.visible = nova.visible = starA.visible = starB.visible = binGlow.visible = false; GV.forEach(g => g.visible = false); GLOWS.forEach(g => g.visible = false); };
-    const tmpP = new T.Vector3(), tmpQ = new T.Vector3();
 
     function step(dt, now, time){
+      if (!stops) return;
+      if (placedFor !== stops || Math.abs(placedAspect - camera.aspect) > .01) placeAll();
+      for (const it of ITEMS) it.tick(time);
       if (RM) return;
-      stepShot(now);
-      if (!ev){
-        if (now < evNext || document.hidden) return;
-        const kind = pickKind(); ev = spawn(now, kind);
-        if (!ev){ evNext = now + 2500; return; }
-        ev.t0 = now; ev.chk = now; lastKind = kind;
-      }
-      const t = (now - ev.t0) / ev.life;
-      if (t >= 1){ hideAll(); ev = null; evNext = now + 9000 + sr() * 7000; return; }
-      let f = fadeOf(t, .14, .2);
-      if (ev.P && !ev.gone && now - ev.chk > 300){ ev.chk = now; const s = screenOf(ev.P, ev.rad); if (s.front && crowded(s)) ev.gone = now; }
-      if (ev.gone){ const k = 1 - (now - ev.gone) / 700; if (k <= 0){ hideAll(); ev = null; evNext = now + 7000 + sr() * 6000; return; } f *= k; }
-
-      if (ev.kind === "bh"){
-        bh.visible = true; bhCore.material.opacity = f; bhDisc.material.uniforms.uA.value = f; bhDisc.material.uniforms.uT.value = time * ev.spin;
-        bhHalo.visible = true; bhHalo.position.copy(ev.P); face(bhHalo, ev.roll); bhHalo.scale.setScalar(ev.r * 4.15 * 2);
-        bhHalo.material.uniforms.uA.value = f;
-      } else if (ev.kind === "gal"){
-        ev.g.visible = true; ev.g.material.uniforms.uOpacity.value = f; ev.g.material.uniforms.uFocus.value = camera.position.distanceTo(ev.P);
-        ev.glow.visible = true; if (!ev.flat) face(ev.glow); ev.glow.material.uniforms.uA.value = f * (ev.flat ? .8 : .45); ev.glow.material.uniforms.uT.value = time * ev.spin;
-      } else if (ev.kind === "nova"){
-        nova.visible = true; nova.position.copy(ev.P); face(nova); nova.scale.setScalar(ev.S);
-        nova.material.uniforms.uK.value = t; nova.material.uniforms.uA.value = Math.min(1, t / .02) * Math.min(1, (1 - t) / .15) * (ev.gone ? f : 1);
-      } else if (ev.kind === "binary"){
-        const ang = time * ev.w, ca = Math.cos(ang), sa = Math.sin(ang), rA = ev.sep * .38, rB = ev.sep * .62;   /* heavier star orbits closer to the centre */
-        starA.visible = starB.visible = binGlow.visible = true;
-        starA.position.copy(ev.P).addScaledVector(ev.u, ca * rA).addScaledVector(ev.v, sa * rA);
-        starB.position.copy(ev.P).addScaledVector(ev.u, -ca * rB).addScaledVector(ev.v, -sa * rB);
-        [starA, starB, binGlow].forEach(m => face(m)); binGlow.position.copy(ev.P);
-        starA.scale.setScalar(ev.sizeA); starB.scale.setScalar(ev.sizeB); binGlow.scale.setScalar(ev.sep * 3.2);
-        starA.material.uniforms.uA.value = f; starB.material.uniforms.uA.value = f; binGlow.material.uniforms.uA.value = f;
-      } else if (ev.kind === "comet"){
-        const head = tmpP.copy(ev.a).lerp(ev.b, t), vel = tmpQ.copy(ev.b).sub(ev.a).normalize();
-        for (let i = 0; i < NC; i++){
-          const k = 1 - i / (NC - 1);                                 /* 1 at the tail end, 0 at the nucleus */
-          CP[i].copy(head).addScaledVector(ev.anti, ev.L * k).addScaledVector(vel, -ev.L * .45 * k * k); CW[i] = ev.L * (.015 + .16 * k);
-          IP[i].copy(head).addScaledVector(ev.anti, ev.L * 1.25 * k); IW[i] = ev.L * (.01 + .04 * k);
-        }
-        dustTail.userData.lay(CP, CW); ionTail.userData.lay(IP, IW);
-        dustTail.visible = ionTail.visible = coma.visible = true;
-        dustTail.material.uniforms.uA.value = f; ionTail.material.uniforms.uA.value = f;
-        dustTail.material.uniforms.uT.value = time; ionTail.material.uniforms.uT.value = time;
-        coma.position.copy(head); face(coma); coma.scale.setScalar(ev.L * .55); coma.material.uniforms.uA.value = f;
-      } else {
-        /* rocket: fly a / b with a gentle bob, nose along the path, boost particles from the nozzle */
-        const e = t, pos = tmpP.copy(ev.a).lerp(ev.b, e);
-        const up = camDir(0, 1, 0); pos.addScaledVector(up, Math.sin(e * 6.28 * 1.5 + ev.wob) * .25 + ev.bob * Math.sin(e * 3.14));
-        const ahead2 = tmpQ.copy(ev.a).lerp(ev.b, Math.min(1, e + .01)).addScaledVector(up, Math.sin((e + .01) * 6.28 * 1.5 + ev.wob) * .25 + ev.bob * Math.sin((e + .01) * 3.14));
-        rocket.visible = boost.visible = true; rocket.position.copy(pos); rocket.lookAt(ahead2); rocket.rotateZ(time * 1.6);
-        [RM_INK, RM_VIO, RM_CY, RM_DK].forEach(m => m.opacity = Math.min(1, f * 1.5));
-        const back = A.copy(pos).sub(ahead2).normalize();
-        bEmit += dt * 200;
-        while (bEmit >= 1){ bEmit -= 1; const i = bNext; bNext = (bNext + 1) % NB;
-          bPos[i * 3] = pos.x + back.x * .14; bPos[i * 3 + 1] = pos.y + back.y * .14; bPos[i * 3 + 2] = pos.z + back.z * .14; bAge[i] = 0;
-          bVel[i * 3] = back.x * .9 + (sr() - .5) * .12; bVel[i * 3 + 1] = back.y * .9 + (sr() - .5) * .12; bVel[i * 3 + 2] = back.z * .9 + (sr() - .5) * .12; }
-        for (let i = 0; i < NB; i++){ if (bAge[i] >= 1) continue; bAge[i] = Math.min(1, bAge[i] + dt / .42);
-          bPos[i * 3] += bVel[i * 3] * dt; bPos[i * 3 + 1] += bVel[i * 3 + 1] * dt; bPos[i * 3 + 2] += bVel[i * 3 + 2] * dt; }
-        bG.attributes.position.needsUpdate = true; bG.attributes.aAge.needsUpdate = true;
-        boost.material.uniforms.uA.value = Math.min(1, f * 1.5);
-      }
+      stepShot(now); stepRocket(dt, now, time);
     }
     return { step };
   })();
