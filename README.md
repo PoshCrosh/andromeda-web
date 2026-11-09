@@ -11,7 +11,8 @@ assets/fonts.css       self-hosted fonts (Archivo, Instrument Sans/Serif, IBM Pl
 assets/fonts/          font files
 assets/js/             three.js, GSAP + ScrollTrigger, Lenis
 img/                   (create it) club photos, mission covers and screenshots
-vercel.json            caching + security headers
+vercel.json            caching + security headers (CSP, Permissions-Policy, cross-origin isolation)
+.well-known/security.txt  where to report a security problem (renew the Expires date yearly)
 .vercelignore          keeps repo-only files off the live site
 ```
 
@@ -22,6 +23,12 @@ This repo is connected to Vercel: **every commit to `main` goes live automatical
 - **Edit from anywhere:** open a file on github.com, click the pencil, change it, and click **Commit changes**.
 - **Add photos:** go into the `img/` folder (create it the first time via *Add file → Upload files*, typing `img/` before the name) and upload.
 - **Undo a bad change:** Vercel → Deployments → pick an older one → **Promote to Production** (instant), or revert the commit on GitHub.
+
+## Security headers
+
+`vercel.json` sets a Content-Security-Policy that only allows scripts, styles, fonts and images from this site itself.
+If you ever add something hosted elsewhere (an embedded video, an analytics script, a font from Google, an image on another domain),
+add that domain to the matching directive (`script-src`, `img-src`, `frame-src`…) or the browser will block it.
 
 ## Link previews
 
